@@ -2,11 +2,11 @@ import streamlit as st
 import pandas as pd
 import io
 
-st.set_page_config(page_title="Inventario por Lotes", page_icon="🏷️", layout="wide")
+st.set_page_config(page_title="Inventario Material + Lote", page_icon="🎯", layout="wide")
 
-st.title("🏷️ Comparador de Inventario: Material + Lote")
+st.title("🎯 Comparador Preciso: Material + Lote")
 st.markdown("""
-Esta versión **concatena el Material con el Lote** para asegurar que la comparación sea exacta por cada partida.
+En esta versión, la **DESCRIPCIÓN** es solo informativa. La comparación real se hace **únicamente** cruzando el código de **MATERIAL** y el **LOTE**.
 """)
 
 # --- BARRA LATERAL ---
@@ -24,29 +24,35 @@ if f1 and f2:
         df1.columns = df1.columns.astype(str).str.strip().str.upper()
         df2.columns = df2.columns.astype(str).str.strip().str.upper()
 
-        columnas_requeridas = ['MATERIAL', 'DESCRIPCION', 'LOTE', 'TOTAL']
+        columnas_necesarias = ['MATERIAL', 'LOTE', 'TOTAL']
+        # La DESCRIPCION es opcional para el cálculo, pero la buscamos para mostrarla
+        tiene_desc = 'DESCRIPCION' in df1.columns and 'DESCRIPCION' in df2.columns
 
-        if all(col in df1.columns for col in columnas_requeridas) and \
-           all(col in df2.columns for col in columnas_requeridas):
+        if all(col in df1.columns for col in columnas_necesarias) and \
+           all(col in df2.columns for col in columnas_necesarias):
             
-            # 2. Función para preparar los datos
-            def preparar_df(df):
-                # Asegurar que LOTE y MATERIAL sean strings para concatenar sin errores
+            # 2. Preparar los datos
+            def preparar_datos(df):
                 df['MATERIAL'] = df['MATERIAL'].astype(str).str.strip()
                 df['LOTE'] = df['LOTE'].astype(str).str.strip()
-                df['DESCRIPCION'] = df['DESCRIPCION'].astype(str).str.strip()
                 
-                # Agrupamos y sumamos por si hay filas repetidas del mismo Material+Lote
-                return df.groupby(['MATERIAL', 'DESCRIPCION', 'LOTE'])['TOTAL'].sum().reset_index()
+                # Agrupamos solo por MATERIAL y LOTE para sumar el TOTAL
+                # Usamos .agg para quedarnos con la primera DESCRIPCION que aparezca (si existe)
+                agg_dict = {'TOTAL': 'sum'}
+                if tiene_desc:
+                    df['DESCRIPCION'] = df['DESCRIPCION'].astype(str).str.strip()
+                    agg_dict['DESCRIPCION'] = 'first'
+                
+                return df.groupby(['MATERIAL', 'LOTE']).agg(agg_dict).reset_index()
 
-            df1_final = preparar_df(df1)
-            df2_final = preparar_df(df2)
+            df1_final = preparar_datos(df1)
+            df2_final = preparar_datos(df2)
 
-            # 3. COMPARACIÓN (Merge por la combinación de las 3 columnas)
+            # 3. COMPARACIÓN (Merge solo por MATERIAL y LOTE)
             res = pd.merge(
                 df1_final, 
                 df2_final, 
-                on=['MATERIAL', 'DESCRIPCION', 'LOTE'], 
+                on=['MATERIAL', 'LOTE'], 
                 how='outer', 
                 suffixes=('_ANT', '_NUEVO')
             ).fillna(0)
@@ -54,38 +60,43 @@ if f1 and f2:
             # 4. Cálculo de Diferencia
             res['DIFERENCIA'] = res['TOTAL_NUEVO'] - res['TOTAL_ANT']
 
-            # --- INTERFAZ DE RESULTADOS ---
-            col_a, col_b, col_c = st.columns(3)
-            col_a.metric("Combinaciones Únicas", len(res))
-            col_b.metric("Entradas / Sobrantes", len(res[res['DIFERENCIA'] > 0]))
-            col_c.metric("Salidas / Faltantes", len(res[res['DIFERENCIA'] < 0]))
+            # Limpiar las descripciones duplicadas (unificar en una sola columna)
+            if tiene_desc:
+                res['DESCRIPCION'] = res['DESCRIPCION_NUEVO'].replace(0, '')
+                res.loc[res['DESCRIPCION'] == '', 'DESCRIPCION'] = res['DESCRIPCION_ANT']
+                # Quitamos las columnas temporales de descripción
+                res = res.drop(columns=['DESCRIPCION_ANT', 'DESCRIPCION_NUEVO'])
 
+            # --- INTERFAZ ---
             st.divider()
+            c1, c2, c3 = st.columns(3)
+            c1.metric("Items Totales", len(res))
+            c2.metric("Sobrantes", len(res[res['DIFERENCIA'] > 0]))
+            c3.metric("Faltantes", len(res[res['DIFERENCIA'] < 0]))
 
-            # Buscador
-            search = st.text_input("🔍 Buscar (Material, Lote o Descripción):")
-            if search:
-                mask = res.apply(lambda x: x.astype(str).str.contains(search, case=False).any(), axis=1)
-                res_display = res[mask]
-            else:
-                res_display = res
+            # Ordenar columnas para que se vea bien
+            cols_ordenadas = ['MATERIAL', 'LOTE']
+            if tiene_desc: cols_ordenadas.append('DESCRIPCION')
+            cols_ordenadas.extend(['TOTAL_ANT', 'TOTAL_NUEVO', 'DIFERENCIA'])
+            
+            res = res[cols_ordenadas]
 
-            # Tabla con Estilo
-            st.subheader("📋 Reporte de Inventario Concatenado")
+            # Tabla
+            st.subheader("📋 Reporte Final")
             st.dataframe(
-                res_display.style.highlight_between(left=-99999, right=-0.1, color='#ffcccc', subset=['DIFERENCIA'])
-                                  .highlight_between(left=0.1, right=99999, color='#ccffcc', subset=['DIFERENCIA']),
+                res.style.highlight_between(left=-99999, right=-0.1, color='#ffcccc', subset=['DIFERENCIA'])
+                          .highlight_between(left=0.1, right=99999, color='#ccffcc', subset=['DIFERENCIA']),
                 use_container_width=True
             )
 
-            # Botón de descarga
+            # Descarga
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 res.to_excel(writer, index=False)
-            st.download_button("📥 Descargar Reporte (Excel)", output.getvalue(), "comparativo_lotes.xlsx")
+            st.download_button("📥 Descargar Reporte Excel", output.getvalue(), "comparativo_material_lote.xlsx")
 
         else:
-            st.error("⚠️ Verifica que ambos archivos tengan las columnas: MATERIAL, DESCRIPCION, LOTE y TOTAL")
+            st.error("⚠️ Error: Faltan las columnas MATERIAL, LOTE o TOTAL en tus archivos.")
             
     except Exception as e:
-        st.error(f"Error al procesar los archivos: {e}")
+        st.error(f"Error técnico: {e}")
