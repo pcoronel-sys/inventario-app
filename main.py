@@ -122,7 +122,7 @@ saludo_txt = "Buenos días" if hora < 12 else "Buenas tardes" if hora < 19 else 
 if st.session_state.modo is None:
     st.markdown(f'<p class="welcome-text">{saludo_txt}, Equipo Bagó</p>', unsafe_allow_html=True)
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align:center; color:#555; font-weight:300; margin-bottom:60px;'>Intel-Stock Management Ecosystem</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align:center; color:#555; font-weight:300; margin-bottom:60px;'>Intel-Stock Management</h3>", unsafe_allow_html=True)
     
     # Grid central imponente
     _, col_l, col_r, _ = st.columns([6.5, 1.8, 1.8, 6.5])
