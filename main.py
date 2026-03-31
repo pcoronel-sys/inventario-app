@@ -50,7 +50,7 @@ def borrar_todo():
     st.rerun()
 
 # --- CABECERA ---
-st.title("🧪 Conciliador de Inventarios Pro")
+st.title("📋Conciliador de Inventarios Pro")
 st.write("Panel de Control Unificado | Laboratorios Bagó")
 st.divider()
 
@@ -144,7 +144,7 @@ if f1 and f2:
                 )
             
             with col_reset:
-                if st.button("🔄 REINICIAR TODO"):
+                if st.button("🔄 LIMPIAR"):
                     borrar_todo()
 
         else:
