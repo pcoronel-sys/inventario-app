@@ -151,15 +151,15 @@ else:
     with st.sidebar:
         st.markdown(f"<h2 style='color:{MAGENTA_BAGO};'>⚙️ Controles</h2>", unsafe_allow_html=True)
         st.info(f"📍 Bodega: {'1010' if st.session_state.modo == 'con_lote' else '1070'}")
-        busq = st.text_input("🔍 Buscar Material...")
-        vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Base", "Todo"])
+        busq = st.text_input("🔍 Buscar Codigo...")
+        vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Base", "Total diferncias"])
         st.divider()
         if st.button("🏠 Volver al Inicio"): borrar_todo()
 
     st.markdown(f"<h2 style='color:{MAGENTA_BAGO};'>📊 Dashboard de Inventario</h2>", unsafe_allow_html=True)
     c_f1, c_f2 = st.columns(2)
     with c_f1: f1 = st.file_uploader("Subir Base Bagó", type=['xlsx'], key="f1")
-    with c_f2: f2 = st.file_uploader("Subir Comparar", type=['xlsx'], key="f2")
+    with c_f2: f2 = st.file_uploader("Subir Base QX/FP", type=['xlsx'], key="f2")
 
     if f1 and f2:
         try:
@@ -197,7 +197,7 @@ else:
             diff_stock = base_bago[base_bago['DIFERENCIA'] != 0]
 
             m1.metric("SKUs Bagó", len(base_bago))
-            m2.metric("Discrepancias", len(diff_stock), delta="-Error" if len(diff_stock)>0 else None, delta_color="normal")
+            m2.metric("Diferencias", len(diff_stock), delta="-Error" if len(diff_stock)>0 else None, delta_color="normal")
             m3.metric("No en Base", len(desconocidos))
             m4.metric("Precisión", f"{round((1 - (len(diff_stock)/len(base_bago)))*100,1)}%" if len(base_bago)>0 else "100%")
 
