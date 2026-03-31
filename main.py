@@ -94,7 +94,7 @@ if st.session_state.modo is None:
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
     st.markdown("<h4 style='text-align:center; color:#888; font-weight:400;'>Inventory Intelligence System</h4><br>", unsafe_allow_html=True)
     
-    _, col_l, col_r, _ = st.columns([3, 2, 2, 3])
+    _, col_l, col_r, _ = st.columns([5.5, 2, 2, 5.5])
     with col_l:
         if st.button("📦\n\nALMACÉN 1010\n\nEmpaque"):
             st.session_state.modo = "con_lote"
