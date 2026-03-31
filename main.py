@@ -36,16 +36,16 @@ st.markdown(f"""
     """, unsafe_allow_html=True)
 
 # --- ENCABEZADO LIMPIO ---
-st.title("🧪 Conciliador de Inventarios")
+st.title("Conciliador de Inventarios")
 st.write("Comparación de stock unificada por Material y Lote")
 st.divider()
 
 # --- CARGA DE ARCHIVOS ---
 c1, c2 = st.columns(2)
 with c1:
-    f1 = st.file_uploader("📂 Inventario ANTERIOR", type=['xlsx'])
+    f1 = st.file_uploader("📂 Inventario 1", type=['xlsx'])
 with c2:
-    f2 = st.file_uploader("📂 Inventario NUEVO", type=['xlsx'])
+    f2 = st.file_uploader("📂 Inventario 2", type=['xlsx'])
 
 if f1 and f2:
     try:
