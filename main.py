@@ -18,21 +18,29 @@ st.markdown(f"""
         border-left: 6px solid {MAGENTA_BAGO};
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }}
+    /* Botones del Menú y Filtros */
     .stButton > button {{
         background: white !important;
         color: {MAGENTA_BAGO} !important;
         border: 2px solid {MAGENTA_BAGO} !important;
-        border-radius: 15px !important;
-        height: 6em !important;
+        border-radius: 10px !important;
         font-weight: bold !important;
+        transition: all 0.3s ease !important;
+        width: 100%;
     }}
-    .stButton > button:hover {{ background: {MAGENTA_BAGO} !important; color: white !important; }}
+    .stButton > button:hover {{
+        background: {MAGENTA_BAGO} !important;
+        color: white !important;
+    }}
+    /* Botón de Descarga */
     .stDownloadButton button {{
         background: linear-gradient(90deg, {MAGENTA_BAGO} 0%, #A00055 100%) !important;
         color: white !important;
         border-radius: 10px !important;
         height: 3.5em !important;
         width: 100% !important;
+        border: none !important;
+        font-weight: bold !important;
     }}
     h1, h2, h3 {{ color: {MAGENTA_BAGO} !important; text-align: center; font-weight: 800; }}
     </style>
@@ -41,6 +49,8 @@ st.markdown(f"""
 # --- NAVEGACIÓN ---
 if 'modo' not in st.session_state:
     st.session_state.modo = None
+if 'filtro_boton' not in st.session_state:
+    st.session_state.filtro_boton = "Todos"
 
 def seleccionar_modo(modo):
     st.session_state.modo = modo
@@ -70,14 +80,14 @@ else:
     modo_txt = "CON LOTE" if st.session_state.modo == "con_lote" else "SIN LOTE"
     st.title(f"🧪 Reporte Unificado {modo_txt}")
     
-    if st.button("⬅️ Cambiar Método"):
+    if st.button("⬅️ Cambiar Método / Volver"):
         borrar_todo()
 
     st.divider()
 
     c1, c2 = st.columns(2)
     with c1:
-        f1 = st.file_uploader("📂 Archivo PRINCIPAL (Base 188 filas)", type=['xlsx'], key="f1")
+        f1 = st.file_uploader("📂 Archivo PRINCIPAL (Base Bagó)", type=['xlsx'], key="f1")
     with c2:
         f2 = st.file_uploader("📂 Archivo COMPARATIVO (FP/QX)", type=['xlsx'], key="f2")
 
@@ -89,7 +99,6 @@ else:
             def limpiar_y_agrupar(df):
                 df.columns = df.columns.astype(str).str.strip().str.upper()
                 df['MATERIAL'] = df['MATERIAL'].astype(str).str.strip().str.upper()
-                
                 agg = {'TOTAL': 'sum'}
                 if 'DESCRIPCION' in df.columns:
                     df['DESCRIPCION'] = df['DESCRIPCION'].astype(str).str.strip().str.upper()
@@ -102,58 +111,71 @@ else:
                 else:
                     return df.groupby(['MATERIAL']).agg(agg).reset_index()
 
-            # Procesamos ambos
             d1 = limpiar_y_agrupar(df1)
             d2 = limpiar_y_agrupar(df2)
 
-            # --- LA CLAVE: LEFT JOIN ---
-            # Esto obliga a que el resultado tenga SOLO los códigos que están en el Archivo 1
+            # --- LEFT JOIN (Mantiene los 188 registros de Bagó) ---
             keys = ['MATERIAL', 'LOTE'] if st.session_state.modo == "con_lote" else ['MATERIAL']
             res = pd.merge(d1, d2, on=keys, how='left', suffixes=('_BAGO', '_FPQX')).fillna(0)
-            
             res['DIFERENCIA'] = res['TOTAL_BAGO'] - res['TOTAL_FPQX']
 
-            # Limpiar descripción
-            if 'DESCRIPCION_BAGO' in res.columns:
-                res['DESCRIPCION'] = res['DESCRIPCION_BAGO']
-                res = res.drop(columns=['DESCRIPCION_BAGO', 'DESCRIPCION_FPQX'], errors='ignore')
-
             # Métricas
-            st.markdown("### 📊 Resumen de Inventario Unificado")
+            st.markdown("### 📊 Resumen Ejecutivo")
             m1, m2, m3 = st.columns(3)
-            m1.metric("Total Registros", len(res), help="Debería coincidir con tu Excel base")
-            m2.metric("Diferencias Encontradas", len(res[res['DIFERENCIA'] != 0]))
-            m3.metric("Coincidencias Exactas", len(res[res['DIFERENCIA'] == 0]))
+            m1.metric("Registros Base", len(res))
+            m2.metric("Con Diferencia", len(res[res['DIFERENCIA'] != 0]))
+            m3.metric("Sin Diferencia", len(res[res['DIFERENCIA'] == 0]))
 
             st.divider()
 
-            # Tabla con filtros
-            busq = st.text_input("🔍 Filtrar por código o descripción:")
+            # --- BOTONES DE FILTRO RÁPIDO ---
+            st.markdown("#### 🛠️ Filtros de Vista")
+            f_col1, f_col2, f_col3 = st.columns(3)
+            with f_col1:
+                if st.button("📄 MOSTRAR TODO"): st.session_state.filtro_boton = "Todos"
+            with f_col2:
+                if st.button("⚠️ SOLO DIFERENCIAS"): st.session_state.filtro_boton = "Diferencias"
+            with f_col3:
+                if st.button("✅ SIN DIFERENCIAS"): st.session_state.filtro_boton = "Iguales"
+
+            # Buscador de texto
+            busq = st.text_input("🔍 O busca manualmente (Código o Descripción):")
+
+            # Lógica de Filtrado Combinada
             res_final = res.copy()
+            
+            if st.session_state.filtro_boton == "Diferencias":
+                res_final = res_final[res_final['DIFERENCIA'] != 0]
+            elif st.session_state.filtro_boton == "Iguales":
+                res_final = res_final[res_final['DIFERENCIA'] == 0]
+            
             if busq:
                 res_final = res_final[res_final.apply(lambda row: row.astype(str).str.contains(busq, case=False).any(), axis=1)]
 
-            # Reordenar columnas
+            # Formatear columnas
             cols = ['MATERIAL']
             if 'LOTE' in res_final.columns: cols.append('LOTE')
-            if 'DESCRIPCION' in res_final.columns: cols.append('DESCRIPCION')
+            if 'DESCRIPCION_BAGO' in res_final.columns:
+                res_final = res_final.rename(columns={'DESCRIPCION_BAGO': 'DESCRIPCION'})
+                cols.append('DESCRIPCION')
             cols += ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']
             res_final = res_final[cols]
 
+            # Tabla
             st.dataframe(
                 res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'])
                                .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA']),
                 use_container_width=True
             )
 
-            # Exportar
+            # Acciones finales
             st.divider()
             c_d, c_r = st.columns([0.7, 0.3])
             with c_d:
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     res_final.to_excel(writer, index=False)
-                st.download_button("📥 DESCARGAR REPORTE UNIFICADO", data=output.getvalue(), file_name=f"Reporte_{st.session_state.modo}.xlsx")
+                st.download_button("📥 DESCARGAR REPORTE", data=output.getvalue(), file_name=f"Reporte_Bago.xlsx")
             with c_r:
                 if st.button("🔄 REINICIAR"): borrar_todo()
 
