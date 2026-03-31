@@ -43,7 +43,7 @@ st.divider()
 # --- CARGA DE ARCHIVOS ---
 c1, c2 = st.columns(2)
 with c1:
-    f1 = st.file_uploader("📂 Inventario BAGÓ", type=['xlsx'])
+    f1 = st.file_uploader("📂 Inventario BAGO", type=['xlsx'])
 with c2:
     f2 = st.file_uploader("📂 Inventario FP/QX", type=['xlsx'])
 
