@@ -3,7 +3,7 @@ import pandas as pd
 import io
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Bagó | Intel-Stock", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="Bagó | Gestion Stock", page_icon="🧪", layout="wide")
 
 # --- DISEÑO ESTÉTICO CENTRADO Y COMPACTO ---
 MAGENTA_BAGO = "#C7006A" 
