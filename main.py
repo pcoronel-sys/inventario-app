@@ -114,11 +114,16 @@ def borrar_todo():
         del st.session_state[key]
     st.rerun()
 
-# --- SALUDO DINÁMICO ---
+# --- SALUDO DINÁMICO CORREGIDO ---
 hora = datetime.now().hour
-saludo_txt = "Buenos días" if hora < 12 else "Buenas tardes" if hora < 19 else "Buenas noches"
+if 5 <= hora < 12:
+    saludo_txt = "☀️ Buenos días"
+elif 12 <= hora < 19:
+    saludo_txt = "🌤️ Buenas tardes"
+else:
+    saludo_txt = "🌙 Buenas noches"
 
-# --- PANTALLA 1: INICIO "CHEVERE" ---
+# --- PANTALLA 1: INICIO ---
 if st.session_state.modo is None:
     st.markdown(f'<p class="welcome-text">{saludo_txt}, Equipo Bagó</p>', unsafe_allow_html=True)
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
@@ -150,7 +155,6 @@ else:
         st.markdown(f"<h2 style='color:{MAGENTA_BAGO};'>⚙️ Controles</h2>", unsafe_allow_html=True)
         st.info(f"📍 Bodega: {'1010' if st.session_state.modo == 'con_lote' else '1070'}")
         busq = st.text_input("🔍 Buscar Código...")
-        # ACTUALIZADO: Filtros en sidebar para las nuevas métricas
         vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Bagó", "No en FP/QX", "Total Diferencias"])
         st.divider()
         if st.button("🏠 Volver al Inicio"): borrar_todo()
@@ -189,15 +193,12 @@ else:
             for col in ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']:
                 res_maestro[col] = res_maestro[col].astype(int)
 
-            # --- NUEVA LÓGICA DE MÉTRICAS (5 COLUMNAS) ---
+            # --- MÉTRICAS (5 COLUMNAS) ---
             m1, m2, m3, m4, m5 = st.columns(5)
             
             base_bago = res_maestro[res_maestro['TOTAL_BAGO'] > 0]
-            # No en Bagó: Existe en FP/QX pero su cantidad en Bagó es 0
             no_en_bago = res_maestro[(res_maestro['TOTAL_BAGO'] == 0) & (res_maestro['TOTAL_FPQX'] > 0)]
-            # No en FP/QX: Existe en Bagó pero su cantidad en FP/QX es 0
             no_en_qx = res_maestro[(res_maestro['TOTAL_BAGO'] > 0) & (res_maestro['TOTAL_FPQX'] == 0)]
-            # Diferencias: Existe en ambos pero las cantidades no coinciden
             diff_stock = res_maestro[(res_maestro['TOTAL_BAGO'] > 0) & (res_maestro['TOTAL_FPQX'] > 0) & (res_maestro['DIFERENCIA'] != 0)]
 
             m1.metric("SKUs Bagó", len(base_bago))
@@ -208,7 +209,6 @@ else:
 
             st.divider()
             
-            # --- FILTRADO POR VISTA ---
             if vista == "Base Bagó": res_final = base_bago.copy()
             elif vista == "Diferencias": res_final = diff_stock.copy()
             elif vista == "No en Bagó": res_final = no_en_bago.copy()
