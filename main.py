@@ -101,7 +101,7 @@ if st.session_state.modo is None:
 else:
     c1, c2 = st.columns([4, 1])
     with c1:
-        st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; margin:0;'>📋 Panel: {'Lote' if st.session_state.modo == 'con_lote' else 'Material'}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; margin:0;'>📋 Panel: {'Empaque (Lote)' if st.session_state.modo == 'con_lote' else 'Promocional (Material)'}</h2>", unsafe_allow_html=True)
     with c2:
         if st.button("🔄 Salir"): borrar_todo()
 
@@ -128,11 +128,10 @@ else:
                     agg['DESCRIPCION'] = 'first'
                 
                 if st.session_state.modo == "con_lote":
-                    # CORRECCIÓN AQUÍ: Agregamos .str para el upper()
                     if 'LOTE' in df.columns:
-                        df['LOTE'] = df['LOTE'].fillna('SIN LOTE').astype(str).str.strip().str.upper()
+                        df['LOTE'] = df['LOTE'].fillna('SN').astype(str).str.strip().str.upper()
                     else:
-                        df['LOTE'] = 'SIN LOTE'
+                        df['LOTE'] = 'SN'
                     return df.groupby(['MATERIAL', 'LOTE']).agg(agg).reset_index()
                 
                 return df.groupby(['MATERIAL']).agg(agg).reset_index()
@@ -140,8 +139,21 @@ else:
             d1, d2 = limpiar(df1), limpiar(df2)
             keys = ['MATERIAL', 'LOTE'] if st.session_state.modo == "con_lote" else ['MATERIAL']
             
-            res_maestro = pd.merge(d1, d2, on=keys, how='outer', suffixes=('_BAGO', '_FPQX')).fillna(0)
+            # --- CRUCE CON LÓGICA DE TEXTOS "SN" ---
+            res_maestro = pd.merge(d1, d2, on=keys, how='outer', suffixes=('_BAGO', '_FPQX'))
+            
+            # Llenamos textos vacíos con SN
+            for col in ['DESCRIPCION', 'LOTE']:
+                if col in res_maestro.columns:
+                    res_maestro[col] = res_maestro[col].fillna('SN')
+            
+            # Llenamos números con 0 para cálculos y convertimos a enteros (sin decimales)
+            res_maestro = res_maestro.fillna(0)
             res_maestro['DIFERENCIA'] = res_maestro['TOTAL_BAGO'] - res_maestro['TOTAL_FPQX']
+            
+            for col in ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']:
+                if col in res_maestro.columns:
+                    res_maestro[col] = res_maestro[col].astype(int)
 
             # DASHBOARD
             m1, m2, m3, m4 = st.columns(4)
@@ -172,7 +184,7 @@ else:
 
             if not res_final.empty:
                 res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
-                st.dataframe(res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA']), use_container_width=True)
+                st.dataframe(res_final.style.highlight_between(left=-999999, right=-1, color='#ffdadb', subset=['DIFERENCIA']), use_container_width=True)
                 
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
