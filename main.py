@@ -101,7 +101,7 @@ if st.session_state.modo is None:
 else:
     c1, c2 = st.columns([4, 1])
     with c1:
-        st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; margin:0;'>🧪 Panel: {'Lote' if st.session_state.modo == 'con_lote' else 'Material'}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; margin:0;'>📋 Panel: {'Lote' if st.session_state.modo == 'con_lote' else 'Material'}</h2>", unsafe_allow_html=True)
     with c2:
         if st.button("🔄 Salir"): borrar_todo()
 
@@ -109,7 +109,7 @@ else:
 
     f_col1, f_col2 = st.columns(2)
     with f_col1:
-        st.info("📂 Inventario BASE (Bagó)")
+        st.info("📂 Inventario BASE (BAGÓ)")
         f1 = st.file_uploader("Subir", type=['xlsx'], key="f1", label_visibility="collapsed")
     with f_col2:
         st.info("📂 Inventario COMPARAR (FP/QX)")
