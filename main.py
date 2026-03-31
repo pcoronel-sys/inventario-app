@@ -152,7 +152,7 @@ else:
         st.markdown(f"<h2 style='color:{MAGENTA_BAGO};'>⚙️ Controles</h2>", unsafe_allow_html=True)
         st.info(f"📍 Bodega: {'1010' if st.session_state.modo == 'con_lote' else '1070'}")
         busq = st.text_input("🔍 Buscar Codigo...")
-        vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Base", "Total diferncias"])
+        vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Base", "Total diferencias"])
         st.divider()
         if st.button("🏠 Volver al Inicio"): borrar_todo()
 
