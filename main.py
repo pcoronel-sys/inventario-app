@@ -149,9 +149,9 @@ else:
     with st.sidebar:
         st.markdown(f"<h2 style='color:{MAGENTA_BAGO};'>⚙️ Controles</h2>", unsafe_allow_html=True)
         st.info(f"📍 Bodega: {'1010' if st.session_state.modo == 'con_lote' else '1070'}")
-        busq = st.text_input("🔍 Buscar Codigo...")
+        busq = st.text_input("🔍 Buscar Código...")
         # ACTUALIZADO: Filtros en sidebar para las nuevas métricas
-        vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Bagó", "No en FP/QX", "Total diferencias"])
+        vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Bagó", "No en FP/QX", "Total Diferencias"])
         st.divider()
         if st.button("🏠 Volver al Inicio"): borrar_todo()
 
