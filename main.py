@@ -155,4 +155,36 @@ else:
                 res_final = res_final[res_final.apply(lambda row: row.astype(str).str.contains(query, case=False).any(), axis=1)]
             
             if filter_opt == "Solo Diferencias":
-                res_final = res_final[res_
+                res_final = res_final[res_final['DIFERENCIA'] != 0]
+            elif filter_opt == "Solo Coincidencias Exactas":
+                res_final = res_final[res_final['DIFERENCIA'] == 0]
+
+            # Reordenar columnas para visualización
+            final_cols = ['MATERIAL']
+            if 'LOTE' in res_final.columns: final_cols.append('LOTE')
+            if 'DESCRIPCION' in res_final.columns: final_cols.append('DESCRIPCION')
+            final_cols += ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']
+            res_final = res_final[final_cols]
+
+            # --- TABLA ---
+            st.dataframe(
+                res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'])
+                               .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA']),
+                use_container_width=True
+            )
+
+            # --- ACCIONES FINALES ---
+            st.divider()
+            c_desc, c_rein = st.columns([0.7, 0.3])
+            with c_desc:
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    res_final.to_excel(writer, index=False)
+                st.download_button("📥 DESCARGAR EXCEL", data=output.getvalue(), file_name=f"Reporte_{st.session_state.modo}.xlsx")
+            with c_rein:
+                if st.button("🔄 REINICIAR"): borrar_todo()
+
+        except Exception as e:
+            st.error(f"Error en el proceso: {e}")
+    else:
+        st.info(f"Suba los archivos para iniciar el cruce {modo_display}")
