@@ -59,7 +59,7 @@ st.markdown(f"""
         background: white;
         border-radius: 20px;
         padding: 20px;
-        border-bottom: 4px solid {MAGENTA_BAGO};
+        border-left: 6px solid {MAGENTA_BAGO};
     }}
 
     .stDownloadButton button {{
@@ -85,9 +85,8 @@ if st.session_state.modo is None:
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-title">Seleccione el método de trabajo</p>', unsafe_allow_html=True)
     
-    # Creamos 5 columnas pero usamos solo las 3 centrales (2, 3, 4) para que los botones queden juntos
-    # El ratio [2, 1.5, 1.5, 2] crea márgenes grandes a los lados y espacio mínimo en el medio
-    _, col_l, col_r, _ = st.columns([2, 1.5, 1.5, 2])
+    # Ajuste de columnas para que los botones choquen en el medio
+    _, col_l, col_r, _ = st.columns([2.5, 2, 2, 2.5])
     
     with col_l:
         if st.button("📦\n\nMODO LOTE\n\nCruce por código y lote", key="btn_lote"):
@@ -127,9 +126,15 @@ else:
                 if 'DESCRIPCION' in df.columns:
                     df['DESCRIPCION'] = df['DESCRIPCION'].astype(str).str.strip().str.upper()
                     agg['DESCRIPCION'] = 'first'
+                
                 if st.session_state.modo == "con_lote":
-                    df['LOTE'] = df['LOTE'].fillna('SIN LOTE').astype(str).str.strip().upper() if 'LOTE' in df.columns else 'SIN LOTE'
+                    # CORRECCIÓN AQUÍ: Agregamos .str para el upper()
+                    if 'LOTE' in df.columns:
+                        df['LOTE'] = df['LOTE'].fillna('SIN LOTE').astype(str).str.strip().str.upper()
+                    else:
+                        df['LOTE'] = 'SIN LOTE'
                     return df.groupby(['MATERIAL', 'LOTE']).agg(agg).reset_index()
+                
                 return df.groupby(['MATERIAL']).agg(agg).reset_index()
 
             d1, d2 = limpiar(df1), limpiar(df2)
@@ -174,4 +179,4 @@ else:
                     res_final.to_excel(writer, index=False)
                 st.download_button("📥 DESCARGAR RESULTADOS", data=output.getvalue(), file_name="Bago_Reporte.xlsx")
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Error detectado: {e}")
