@@ -83,7 +83,7 @@ def borrar_todo():
 # --- PANTALLA 1: MENÚ JUNTOS EN EL CENTRO ---
 if st.session_state.modo is None:
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
-    st.markdown('<p class="sub-title">Seleccione el método de trabajo</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-title">Sistema de cruce de inventarios</p>', unsafe_allow_html=True)
     
     # Ajuste de columnas para que los botones choquen en el medio
     _, col_l, col_r, _ = st.columns([5.5, 2, 2, 5.5])
