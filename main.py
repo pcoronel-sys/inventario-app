@@ -86,7 +86,7 @@ if st.session_state.modo is None:
     st.markdown('<p class="sub-title">Seleccione el método de trabajo</p>', unsafe_allow_html=True)
     
     # Ajuste de columnas para que los botones choquen en el medio
-    _, col_l, col_r, _ = st.columns([2.5, 2, 2, 2.5])
+    _, col_l, col_r, _ = st.columns([3.5, 2, 2, 3.5])
     
     with col_l:
         if st.button("\n\nMODO LOTE\n\nCruce por código y lote", key="btn_lote"):
