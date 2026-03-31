@@ -5,79 +5,53 @@ import io
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Bagó | Intel-Stock", page_icon="🧪", layout="wide")
 
-# --- IDENTIDAD VISUAL Y CSS DINÁMICO (EFECTO HOVER AVANZADO) ---
+# --- IDENTIDAD VISUAL Y CSS DE SÚPER TARJETAS ---
 MAGENTA_BAGO = "#C7006A" 
 MAGENTA_OSCURO = "#8A004A"
 
 st.markdown(f"""
     <style>
-    /* Fondo General */
     .main {{ background: #f4f7f9; }}
     
-    /* Contenedor de las Tarjetas */
-    .menu-container {{
-        display: flex;
-        justify-content: center;
-        gap: 30px;
-        padding: 50px;
-    }}
-
-    /* Tarjeta de Menú con Animación */
-    .menu-card {{
-        background: white;
-        padding: 40px;
-        border-radius: 25px;
-        border: 2px solid transparent;
-        text-align: center;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        cursor: pointer;
-        width: 100%;
-    }}
-
-    /* EFECTO CUANDO EL RATÓN ESTÁ ENCIMA */
-    .menu-card:hover {{
-        transform: translateY(-15px) scale(1.02);
-        border-color: {MAGENTA_BAGO};
-        box-shadow: 0 20px 40px rgba(199, 0, 106, 0.2);
-        background: linear-gradient(180deg, #ffffff 0%, #fff5f9 100%);
-    }}
-
-    /* Estilo del texto dentro de la tarjeta al hacer hover */
-    .menu-card:hover h3 {{
-        color: {MAGENTA_BAGO} !important;
-        transform: scale(1.1);
-        transition: 0.3s;
-    }}
-
-    /* Botón de Selección que reacciona al movimiento */
-    .stButton > button {{
-        width: 100%;
-        border-radius: 15px !important;
-        font-weight: bold !important;
-        height: 60px !important;
-        transition: all 0.3s ease !important;
-        background: #f8f9fa !important;
+    /* Estilo para que los botones de Streamlit parezcan tarjetas gigantes */
+    div.stButton > button {{
+        background-color: white !important;
         color: #444 !important;
-        border: 1px solid #ddd !important;
+        border: 2px solid #eee !important;
+        border-radius: 25px !important;
+        height: 300px !important;
+        width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        white-space: normal !important;
+        padding: 20px !important;
     }}
 
-    /* Botón cambia a Magenta cuando el ratón entra a la tarjeta o al botón */
-    .menu-card:hover .stButton > button, .stButton > button:hover {{
-        background: {MAGENTA_BAGO} !important;
+    /* EFECTO HOVER: La tarjeta se vuelve Magenta y se eleva */
+    div.stButton > button:hover {{
+        background: linear-gradient(180deg, {MAGENTA_BAGO} 0%, {MAGENTA_OSCURO} 100%) !important;
         color: white !important;
-        border: none !important;
-        box-shadow: 0 5px 15px rgba(199, 0, 106, 0.3);
+        transform: translateY(-15px) scale(1.02) !important;
+        border-color: {MAGENTA_BAGO} !important;
+        box-shadow: 0 20px 40px rgba(199, 0, 106, 0.3) !important;
     }}
 
-    /* Botón de Descarga Premium */
+    /* Ajuste de texto dentro del botón-tarjeta */
+    div.stButton > button p {{
+        font-size: 1.5em !important;
+        font-weight: 800 !important;
+    }}
+
+    /* Botón de Descarga (se mantiene igual para no confundir) */
     .stDownloadButton button {{
         background: linear-gradient(90deg, {MAGENTA_BAGO} 0%, {MAGENTA_OSCURO} 100%) !important;
         color: white !important;
-        border-radius: 12px !important;
-        font-weight: bold !important;
         height: 3.8em !important;
-        box-shadow: 0 4px 15px rgba(199, 0, 106, 0.3) !important;
+        border-radius: 12px !important;
     }}
 
     h1 {{ color: {MAGENTA_BAGO} !important; font-weight: 800; text-align: center; }}
@@ -96,38 +70,31 @@ def borrar_todo():
         del st.session_state[key]
     st.rerun()
 
-# --- PANTALLA 1: MENÚ PRINCIPAL DINÁMICO ---
+# --- PANTALLA 1: MENÚ DE SUPER TARJETAS ---
 if st.session_state.modo is None:
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("<h1>🧪 Laboratorios Bagó</h1>", unsafe_allow_html=True)
-    st.markdown("<h3 style='text-align:center; color:#666;'>Seleccione el método de trabajo</h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align:center; color:#666;'>Seleccione el método de conciliación para comenzar</h3>", unsafe_allow_html=True)
     st.markdown("<br>", unsafe_allow_html=True)
     
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown('<div class="menu-card">', unsafe_allow_html=True)
-        st.markdown("<h3 style='margin-bottom:10px;'>📦 Modo Lote</h3>", unsafe_allow_html=True)
-        st.write("Análisis quirúrgico por código y lote.")
-        if st.button("CONFIGURAR LOTE", key="btn_lote"):
+        # El botón ahora contiene todo el texto y diseño
+        if st.button("📦 MODO LOTE\n\nAnálisis quirúrgico por código de material y número de lote. Ideal para trazabilidad farmacéutica.", key="btn_lote"):
             seleccionar_modo("con_lote")
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
             
     with col2:
-        st.markdown('<div class="menu-card">', unsafe_allow_html=True)
-        st.markdown("<h3 style='margin-bottom:10px;'>🔢 Modo Material</h3>", unsafe_allow_html=True)
-        st.write("Cruce global por código de producto.")
-        if st.button("CONFIGURAR MATERIAL", key="btn_sin_lote"):
+        if st.button("🔢 MODO MATERIAL\n\nCruce global por código de producto. Suma todas las existencias ignorando los lotes.", key="btn_sin_lote"):
             seleccionar_modo("sin_lote")
             st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
-# --- PANTALLA 2: APLICACIÓN (EL RESTO DEL CÓDIGO SE MANTIENE IGUAL) ---
+# --- PANTALLA 2: APLICACIÓN ---
 else:
     c_head1, c_head2 = st.columns([4, 1])
     with c_head1:
-        modo_txt = "CON LOTE" if st.session_state.modo == "con_lote" else "SIN LOTE"
+        modo_txt = "DETALLADO (LOTE)" if st.session_state.modo == "con_lote" else "GENERAL (MATERIAL)"
         st.markdown(f"<h2 style='text-align: left; color:{MAGENTA_BAGO}; margin:0;'>🧪 Reporte: {modo_txt}</h2>", unsafe_allow_html=True)
     with c_head2:
         if st.button("🔄 Volver al Menú"):
@@ -177,9 +144,9 @@ else:
             diferencias = len(res_base[res_base['TOTAL_BAGO'] != res_base['TOTAL_FPQX']])
             codigos_faltantes = len(solo_en_fpqx)
 
-            m1.metric("Items en Bagó", len(d1))
+            m1.metric("Items Bagó", len(d1))
             m2.metric("Discrepancias", diferencias, delta_color="inverse")
-            m3.metric("Faltantes en Bagó", codigos_faltantes, delta="⚠️ EXTRA", delta_color="inverse" if codigos_faltantes > 0 else "normal")
+            m3.metric("Extra en FP/QX", codigos_faltantes, delta="⚠️ EXTRA", delta_color="inverse" if codigos_faltantes > 0 else "normal")
             m4.metric("Precisión", f"{round((1 - (codigos_faltantes/len(d1)))*100,1)}%" if len(d1)>0 else "0%")
 
             st.divider()
@@ -216,7 +183,7 @@ else:
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     res_final.to_excel(writer, index=False)
-                st.download_button("📥 DESCARGAR EXCEL", data=output.getvalue(), file_name=f"Bago_{opcion_vista}.xlsx")
+                st.download_button("📥 DESCARGAR RESULTADOS", data=output.getvalue(), file_name=f"Reporte_Bago.xlsx")
             else:
                 st.info("No hay datos para esta selección.")
 
