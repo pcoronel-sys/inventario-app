@@ -191,4 +191,23 @@ else:
                 if 'DESCRIPCION' in res_final.columns:
                     res_final['DESCRIPCION'] = res_final['DESCRIPCION'].replace(['0', 0, '0.0'], 'SN')
 
-                res_final = res
+                res_final = res_final.rename(columns={'TOTAL_BAGO': 'BAGÓ', 'TOTAL_FPQX': 'FP/QX', 'DIFERENCIA': 'DIF.'})
+                
+                # TABLA ESTILIZADA
+                st.dataframe(
+                    res_final.style.highlight_between(left=-999999, right=-1, color='#ffdadb', subset=['DIF.'])
+                                   .highlight_between(left=1, right=999999, color='#d4edda', subset=['DIF.']),
+                    use_container_width=True
+                )
+                
+                # Descarga en el Sidebar para no estorbar
+                with st.sidebar:
+                    st.divider()
+                    output = io.BytesIO()
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                        res_final.to_excel(writer, index=False)
+                    st.download_button("📥 DESCARGAR EXCEL", data=output.getvalue(), file_name="Auditoria_Bago.xlsx")
+            else:
+                st.warning("No se encontraron registros bajo este filtro.")
+        except Exception as e:
+            st.error(f"Error: {e}")
