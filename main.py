@@ -73,7 +73,7 @@ if f1 and f2:
             d2 = procesar(df2)
 
             res = pd.merge(d1, d2, on=['MATERIAL', 'LOTE'], how='outer', suffixes=('_BAGO', '_FP/QX')).fillna(0)
-            res['DIFERENCIA'] = res['TOTAL_NUEVO'] - res['TOTAL_ANT']
+            res['DIFERENCIA'] = res['TOTAL_BAGO'] - res['TOTAL_FP/QX']
 
             if tiene_desc:
                 res['DESCRIPCION'] = res['DESCRIPCION_FP/QX'].replace(0, '')
