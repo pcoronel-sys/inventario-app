@@ -85,7 +85,6 @@ if st.session_state.modo is None:
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-title">Sistema de cruce de inventarios</p>', unsafe_allow_html=True)
     
-    # Ajuste de columnas para que los botones choquen en el medio
     _, col_l, col_r, _ = st.columns([5.5, 2, 2, 5.5])
     
     with col_l:
@@ -101,7 +100,7 @@ if st.session_state.modo is None:
 else:
     c1, c2 = st.columns([4, 1])
     with c1:
-        st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; margin:0;'>📋 Panel: {'Empaque (Lote)' if st.session_state.modo == 'con_lote' else 'Promocional (Material)'}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; margin:0;'>📋 Panel: {'Lote' if st.session_state.modo == 'con_lote' else 'Material'}</h2>", unsafe_allow_html=True)
     with c2:
         if st.button("🔄 Salir"): borrar_todo()
 
@@ -142,10 +141,10 @@ else:
             # --- CRUCE MAESTRO ---
             res_maestro = pd.merge(d1, d2, on=keys, how='outer', suffixes=('_BAGO', '_FPQX'))
             
-            # PASO FINAL: Limpiar textos para que DESCRIPCION muestre SN y no 0
+            # CANDADO 1: Reemplazamos 0 y vacíos en textos justo después del cruce
             for col in ['DESCRIPCION', 'LOTE']:
                 if col in res_maestro.columns:
-                    res_maestro[col] = res_maestro[col].fillna('SN').astype(str)
+                    res_maestro[col] = res_maestro[col].replace([0, '0', '0.0'], 'SN').fillna('SN').astype(str)
 
             # Llenamos números con 0 y calculamos diferencia
             res_maestro = res_maestro.fillna(0)
@@ -184,6 +183,10 @@ else:
                 res_final = res_final[res_final.apply(lambda r: r.astype(str).str.contains(busq, case=False).any(), axis=1)]
 
             if not res_final.empty:
+                # CANDADO 2: Refuerzo final antes de mostrar la tabla
+                if 'DESCRIPCION' in res_final.columns:
+                    res_final['DESCRIPCION'] = res_final['DESCRIPCION'].replace(['0', 0, '0.0'], 'SN')
+                
                 res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
                 st.dataframe(res_final.style.highlight_between(left=-999999, right=-1, color='#ffdadb', subset=['DIFERENCIA']), use_container_width=True)
                 
