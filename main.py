@@ -72,15 +72,16 @@ if f1 and f2:
             d1 = procesar(df1)
             d2 = procesar(df2)
 
-            res = pd.merge(d1, d2, on=['MATERIAL', 'LOTE'], how='outer', suffixes=('_BAGO', '_FP/QX')).fillna(0)
-            res['DIFERENCIA'] = res['TOTAL_BAGO'] - res['TOTAL_FP/QX']
+            # Usamos nombres internos temporales para evitar problemas con el "/"
+            res = pd.merge(d1, d2, on=['MATERIAL', 'LOTE'], how='outer', suffixes=('_BAGO', '_FPQX')).fillna(0)
+            res['DIFERENCIA'] = res['TOTAL_BAGO'] - res['TOTAL_FPQX']
 
             if tiene_desc:
-                res['DESCRIPCION'] = res['DESCRIPCION_FP/QX'].replace(0, '')
+                res['DESCRIPCION'] = res['DESCRIPCION_FPQX'].replace(0, '')
                 res.loc[res['DESCRIPCION'] == '', 'DESCRIPCION'] = res['DESCRIPCION_BAGO']
-                res = res.drop(columns=['DESCRIPCION_BAGO', 'DESCRIPCION_FP/QX'])
+                res = res.drop(columns=['DESCRIPCION_BAGO', 'DESCRIPCION_FPQX'])
 
-            # --- 📊 MÉTRICAS (SOLO LAS 3 QUE PEDISTE) ---
+            # --- 📊 MÉTRICAS ---
             st.markdown("### 📊 Resumen de Diferencias")
             m1, m2, m3 = st.columns(3)
             
@@ -110,9 +111,12 @@ if f1 and f2:
             elif opcion == "Faltantes":
                 res_final = res_final[res_final['DIFERENCIA'] < 0]
 
+            # Renombrar columnas finales para el usuario
+            res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
+            
             cols = ['MATERIAL', 'LOTE']
             if tiene_desc: cols.append('DESCRIPCION')
-            cols += ['TOTAL_BAGO', 'TOTAL_FP/QX', 'DIFERENCIA']
+            cols += ['TOTAL BAGO', 'TOTAL FP/QX', 'DIFERENCIA']
             res_final = res_final[cols]
 
             # --- TABLA ---
@@ -130,12 +134,12 @@ if f1 and f2:
             st.download_button(
                 label="📥 EXPORTAR RESULTADOS A EXCEL",
                 data=output.getvalue(),
-                file_name="Reporte_Conciliacion.xlsx",
+                file_name="Reporte_Conciliacion_Bago.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
         else:
-            st.error("⚠️ Columnas no encontradas.")
+            st.error("⚠️ Columnas no encontradas. Asegúrate de que ambos archivos tengan: MATERIAL, LOTE y TOTAL.")
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error al procesar los archivos: {e}")
 else:
-    st.info("👋 Sube los archivos para comenzar.")
+    st.info("👋 Sube ambos archivos para comenzar la conciliación.")
