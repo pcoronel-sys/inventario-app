@@ -89,11 +89,11 @@ if st.session_state.modo is None:
     _, col_l, col_r, _ = st.columns([5.5, 2, 2, 5.5])
     
     with col_l:
-        if st.button("\n\nMATERIAL DE EMPAQUE\n\nCruce por código y lote", key="btn_lote"):
+        if st.button("\n\nMATERIAL DE EMPAQUE\n\nALMACEN 1010", key="btn_lote"):
             st.session_state.modo = "con_lote"
             st.rerun()
     with col_r:
-        if st.button("\n\nMATERIAL PROMOCIONAL\n\nCruce global por código", key="btn_sin_lote"):
+        if st.button("\n\nMATERIAL PROMOCIONAL\n\nALMACEN 1070", key="btn_sin_lote"):
             st.session_state.modo = "sin_lote"
             st.rerun()
 
