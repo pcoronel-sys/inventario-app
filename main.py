@@ -6,77 +6,101 @@ from datetime import datetime
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Bagó | Intel-Stock Pro", page_icon="🧪", layout="wide")
 
-# --- DISEÑO ESTÉTICO UI/UX PREMIUM ---
+# --- DISEÑO ESTÉTICO UI/UX PRO (EFECTO GLASS Y ANIMACIONES) ---
 MAGENTA_BAGO = "#C7006A" 
 MAGENTA_OSCURO = "#8A004A"
 
 st.markdown(f"""
     <style>
-    .main {{ background: linear-gradient(135deg, #f8f9fc 0%, #e2e7f0 100%); }}
+    /* Fondo con gradiente dinámico */
+    .main {{ 
+        background: radial-gradient(circle at top right, #ffffff, #f0f2f6); 
+    }}
     
     /* Saludo Dinámico */
     .welcome-text {{
         text-align: center;
-        color: #666;
-        font-size: 1.1rem;
-        margin-bottom: 20px;
-        font-weight: 400;
+        color: #888;
+        font-size: 1.2rem;
+        font-weight: 300;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+        margin-bottom: -10px;
     }}
 
-    /* Título con Reflejo */
+    /* Título Impactante */
     .main-title {{
         color: {MAGENTA_BAGO};
-        font-size: 3.8rem !important;
-        font-weight: 800 !important;
+        font-size: 5rem !important;
+        font-weight: 900 !important;
         text-align: center;
-        margin-top: 10px;
-        margin-bottom: 0px;
-        letter-spacing: -2px;
-        filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.1));
+        margin-top: 0px;
+        letter-spacing: -4px;
+        filter: drop-shadow(0px 10px 15px rgba(199, 0, 106, 0.2));
+        line-height: 1;
     }}
 
-    /* Botones de Inicio con Estilo */
+    /* BOTONES TIPO TARJETA PREMIUM */
     div.stButton > button {{
-        background: white !important;
+        background: rgba(255, 255, 255, 0.7) !important;
+        backdrop-filter: blur(15px) !important;
         color: #333 !important;
-        border: 1px solid #e0e0e0 !important;
-        border-radius: 28px !important;
-        height: 200px !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        border-radius: 35px !important;
+        height: 250px !important;
         width: 100% !important;
-        box-shadow: 0 15px 35px rgba(0,0,0,0.05) !important;
-        transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
-        font-weight: 700 !important;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.05) !important;
+        transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1.0) !important;
+        font-size: 1.4rem !important;
+        font-weight: 800 !important;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }}
 
     div.stButton > button:hover {{
-        background: linear-gradient(145deg, {MAGENTA_BAGO}, {MAGENTA_OSCURO}) !important;
+        background: linear-gradient(135deg, {MAGENTA_BAGO} 0%, {MAGENTA_OSCURO} 100%) !important;
         color: white !important;
-        transform: translateY(-10px) scale(1.02) !important;
-        box-shadow: 0 20px 40px rgba(199, 0, 106, 0.25) !important;
+        transform: translateY(-15px) scale(1.03) !important;
+        box-shadow: 0 30px 60px rgba(199, 0, 106, 0.3) !important;
+        border: 1px solid {MAGENTA_BAGO} !important;
     }}
 
-    /* Tarjetas de Métricas (Manteniendo el Estilo de la Imagen) */
+    /* Etiquetas de Almacén */
+    .almacen-tag {{
+        text-align: center;
+        color: {MAGENTA_BAGO};
+        font-weight: 800;
+        font-size: 1rem;
+        margin-bottom: 10px;
+        letter-spacing: 1px;
+    }}
+
+    /* Footer Informativo con Estilo de Tarjeta */
+    .footer-card {{
+        background: white;
+        border-radius: 25px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        border-bottom: 5px solid {MAGENTA_BAGO};
+        transition: 0.3s;
+    }}
+    .footer-card:hover {{
+        transform: translateY(-5px);
+    }}
+
+    /* Sidebar y Métricas */
+    [data-testid="stSidebar"] {{
+        background-color: white !important;
+        border-right: 1px solid #eee;
+    }}
     div[data-testid="stMetric"] {{
         background: white !important;
         border-radius: 20px !important;
         padding: 20px !important;
-        border-left: 6px solid {MAGENTA_BAGO} !important;
-        box-shadow: 0 8px 25px rgba(0,0,0,0.04) !important;
-    }}
-
-    /* Footer Informativo */
-    .footer-box {{
-        background: rgba(255,255,255,0.5);
-        border-radius: 20px;
-        padding: 20px;
-        margin-top: 50px;
-        text-align: center;
-        border: 1px dashed {MAGENTA_BAGO};
-    }}
-
-    [data-testid="stSidebar"] {{
-        background-color: white !important;
-        border-right: 2px solid {MAGENTA_BAGO}22;
+        border-left: 8px solid {MAGENTA_BAGO} !important;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.04) !important;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -92,34 +116,35 @@ def borrar_todo():
 
 # --- SALUDO DINÁMICO ---
 hora = datetime.now().hour
-if hora < 12: saludo = "☀️ Buenos días"
-elif hora < 19: saludo = "🌤️ Buenas tardes"
-else: saludo = "🌙 Buenas noches"
+saludo_txt = "Buenos días" if hora < 12 else "Buenas tardes" if hora < 19 else "Buenas noches"
 
-# --- PANTALLA 1: INICIO ---
+# --- PANTALLA 1: INICIO "CHEVERE" ---
 if st.session_state.modo is None:
-    st.markdown(f'<p class="welcome-text">{saludo}, Equipo Bagó</p>', unsafe_allow_html=True)
+    st.markdown(f'<p class="welcome-text">{saludo_txt}, Equipo Bagó</p>', unsafe_allow_html=True)
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
-    st.markdown("<h4 style='text-align:center; color:#888; font-weight:300; margin-bottom:50px;'>Intelligence Stock Management System</h4>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align:center; color:#555; font-weight:300; margin-bottom:60px;'>Intel-Stock Management Ecosystem</h3>", unsafe_allow_html=True)
     
-    _, col_l, col_r, _ = st.columns([6.5, 1.8, 1.8, 6.5])
+    # Grid central imponente
+    _, col_l, col_r, _ = st.columns([2.5, 2.5, 2.5, 2.5])
     
     with col_l:
-        st.markdown(f"<div style='text-align:center; color:{MAGENTA_BAGO}; font-weight:bold; margin-bottom:10px;'>BODEGA DE EMPAQUE</div>", unsafe_allow_html=True)
-        if st.button("\n\nALMACÉN 1010\n\n"):
+        st.markdown(f'<p class="almacen-tag">ALMACÉN 1010</p>', unsafe_allow_html=True)
+        if st.button("📦\n\nEMPAQUE\n\n(Gestión por Lote)"):
             st.session_state.modo = "con_lote"
             st.rerun()
             
     with col_r:
-        st.markdown(f"<div style='text-align:center; color:{MAGENTA_BAGO}; font-weight:bold; margin-bottom:10px;'>BODEGA PROMOCIONAL</div>", unsafe_allow_html=True)
-        if st.button("\n\nALMACÉN 1070\n\n"):
+        st.markdown(f'<p class="almacen-tag">ALMACÉN 1070</p>', unsafe_allow_html=True)
+        if st.button("🔢\n\nPROMOCIONAL\n\n(Gestión Global)"):
             st.session_state.modo = "sin_lote"
             st.rerun()
 
+    # Footer con pasos visuales
+    st.markdown("<br><br><br>", unsafe_allow_html=True)
     f1, f2, f3 = st.columns(3)
-    with f1: st.markdown("<div class='footer-box'><b>1. Selecciona</b><br>El almacén a auditar.</div>", unsafe_allow_html=True)
-    with f2: st.markdown("<div class='footer-box'><b>2. Carga</b><br>Sube tus archivos de Excel.</div>", unsafe_allow_html=True)
-    with f3: st.markdown("<div class='footer-box'><b>3. Reporta</b><br>Descarga el cruce final.</div>", unsafe_allow_html=True)
+    with f1: st.markdown("<div class='footer-card'><h3>📂 1. Conexión</h3>Subida de maestros de inventario</div>", unsafe_allow_html=True)
+    with f2: st.markdown("<div class='footer-card'><h3>⚡ 2. Proceso</h3>Cruce inteligente de datos en tiempo real</div>", unsafe_allow_html=True)
+    with f3: st.markdown("<div class='footer-card'><h3>📊 3. Auditoría</h3>Descarga inmediata del reporte final</div>", unsafe_allow_html=True)
 
 # --- PANTALLA 2: REPORTE ---
 else:
@@ -165,7 +190,7 @@ else:
             for col in ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']:
                 res_maestro[col] = res_maestro[col].astype(int)
 
-            # --- MÉTRICAS (IGUAL A LA IMAGEN) ---
+            # MÉTRICAS
             m1, m2, m3, m4 = st.columns(4)
             base_bago = res_maestro[res_maestro['TOTAL_BAGO'] > 0]
             desconocidos = res_maestro[(res_maestro['TOTAL_BAGO'] == 0) & (res_maestro['TOTAL_FPQX'] > 0)]
