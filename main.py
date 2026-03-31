@@ -5,7 +5,7 @@ import io
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Bagó | Intel-Stock", page_icon="🧪", layout="wide")
 
-# --- IDENTIDAD VISUAL Y CSS DINÁMICO ---
+# --- IDENTIDAD VISUAL Y CSS DINÁMICO (EFECTO HOVER AVANZADO) ---
 MAGENTA_BAGO = "#C7006A" 
 MAGENTA_OSCURO = "#8A004A"
 
@@ -14,42 +14,60 @@ st.markdown(f"""
     /* Fondo General */
     .main {{ background: #f4f7f9; }}
     
-    /* Diseño de las Tarjetas del Menú Principal */
+    /* Contenedor de las Tarjetas */
+    .menu-container {{
+        display: flex;
+        justify-content: center;
+        gap: 30px;
+        padding: 50px;
+    }}
+
+    /* Tarjeta de Menú con Animación */
     .menu-card {{
         background: white;
         padding: 40px;
-        border-radius: 20px;
-        border-bottom: 8px solid {MAGENTA_BAGO};
+        border-radius: 25px;
+        border: 2px solid transparent;
         text-align: center;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.05);
-        transition: all 0.3s ease;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer;
-        margin-bottom: 20px;
-    }}
-    .menu-card:hover {{
-        transform: translateY(-10px);
-        box-shadow: 0 15px 35px rgba(199, 0, 106, 0.15);
-        background: linear-gradient(180deg, #ffffff 0%, #fff0f6 100%);
-    }}
-    
-    /* Estilo de los Botones de Selección */
-    .stButton > button {{
         width: 100%;
-        border-radius: 12px !important;
-        font-weight: bold !important;
-        transition: all 0.3s ease !important;
     }}
 
-    /* Botón de Selección del Menú (Especial) */
-    .menu-btn > div > button {{
-        height: 80px !important;
-        background: white !important;
-        color: {MAGENTA_BAGO} !important;
-        border: 2px solid {MAGENTA_BAGO} !important;
+    /* EFECTO CUANDO EL RATÓN ESTÁ ENCIMA */
+    .menu-card:hover {{
+        transform: translateY(-15px) scale(1.02);
+        border-color: {MAGENTA_BAGO};
+        box-shadow: 0 20px 40px rgba(199, 0, 106, 0.2);
+        background: linear-gradient(180deg, #ffffff 0%, #fff5f9 100%);
     }}
-    .menu-btn > div > button:hover {{
+
+    /* Estilo del texto dentro de la tarjeta al hacer hover */
+    .menu-card:hover h3 {{
+        color: {MAGENTA_BAGO} !important;
+        transform: scale(1.1);
+        transition: 0.3s;
+    }}
+
+    /* Botón de Selección que reacciona al movimiento */
+    .stButton > button {{
+        width: 100%;
+        border-radius: 15px !important;
+        font-weight: bold !important;
+        height: 60px !important;
+        transition: all 0.3s ease !important;
+        background: #f8f9fa !important;
+        color: #444 !important;
+        border: 1px solid #ddd !important;
+    }}
+
+    /* Botón cambia a Magenta cuando el ratón entra a la tarjeta o al botón */
+    .menu-card:hover .stButton > button, .stButton > button:hover {{
         background: {MAGENTA_BAGO} !important;
         color: white !important;
+        border: none !important;
+        box-shadow: 0 5px 15px rgba(199, 0, 106, 0.3);
     }}
 
     /* Botón de Descarga Premium */
@@ -59,26 +77,10 @@ st.markdown(f"""
         border-radius: 12px !important;
         font-weight: bold !important;
         height: 3.8em !important;
-        width: 100% !important;
-        border: none !important;
         box-shadow: 0 4px 15px rgba(199, 0, 106, 0.3) !important;
-        transition: transform 0.2s !important;
-    }}
-    .stDownloadButton button:hover {{
-        transform: scale(1.02) !important;
     }}
 
-    /* Métricas */
-    [data-testid="stMetric"] {{
-        background: white;
-        border-radius: 15px;
-        padding: 15px;
-        border-left: 5px solid {MAGENTA_BAGO};
-        box-shadow: 0 4px 6px rgba(0,0,0,0.02);
-    }}
-    
-    h1 {{ color: {MAGENTA_BAGO} !important; font-weight: 800; text-align: center; letter-spacing: -1px; }}
-    h3 {{ color: #444 !important; text-align: center; font-weight: 400; }}
+    h1 {{ color: {MAGENTA_BAGO} !important; font-weight: 800; text-align: center; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -98,32 +100,30 @@ def borrar_todo():
 if st.session_state.modo is None:
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("<h1>🧪 Laboratorios Bagó</h1>", unsafe_allow_html=True)
-    st.markdown("<h3>Sistema Inteligente de Conciliación de Inventarios</h3>", unsafe_allow_html=True)
-    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align:center; color:#666;'>Seleccione el método de trabajo</h3>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
     
-    col1, col_gap, col2 = st.columns([1, 0.1, 1])
+    col1, col2 = st.columns(2)
     
     with col1:
         st.markdown('<div class="menu-card">', unsafe_allow_html=True)
-        st.write("### 📦 Modo Lote")
-        st.write("Cruce detallado por código de material y número de lote.")
-        st.markdown('<div class="menu-btn">', unsafe_allow_html=True)
-        if st.button("INICIAR CON LOTE", key="btn_lote"):
+        st.markdown("<h3 style='margin-bottom:10px;'>📦 Modo Lote</h3>", unsafe_allow_html=True)
+        st.write("Análisis quirúrgico por código y lote.")
+        if st.button("CONFIGURAR LOTE", key="btn_lote"):
             seleccionar_modo("con_lote")
             st.rerun()
-        st.markdown('</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
             
     with col2:
         st.markdown('<div class="menu-card">', unsafe_allow_html=True)
-        st.write("### 🔢 Modo Material")
-        st.write("Suma total por código de producto, ignorando lotes.")
-        st.markdown('<div class="menu-btn">', unsafe_allow_html=True)
-        if st.button("INICIAR SIN LOTE", key="btn_sin_lote"):
+        st.markdown("<h3 style='margin-bottom:10px;'>🔢 Modo Material</h3>", unsafe_allow_html=True)
+        st.write("Cruce global por código de producto.")
+        if st.button("CONFIGURAR MATERIAL", key="btn_sin_lote"):
             seleccionar_modo("sin_lote")
             st.rerun()
-        st.markdown('</div></div>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# --- PANTALLA 2: APLICACIÓN DE CONCILIACIÓN ---
+# --- PANTALLA 2: APLICACIÓN (EL RESTO DEL CÓDIGO SE MANTIENE IGUAL) ---
 else:
     c_head1, c_head2 = st.columns([4, 1])
     with c_head1:
@@ -135,14 +135,13 @@ else:
 
     st.divider()
 
-    # Carga de archivos en tarjetas limpias
     col_f1, col_f2 = st.columns(2)
     with col_f1:
-        st.info("**PASO 1:** Subir Inventario Base (Bagó)")
-        f1 = st.file_uploader("Excel Principal", type=['xlsx'], key="f1", label_visibility="collapsed")
+        st.info("📂 Archivo BASE (Bagó)")
+        f1 = st.file_uploader("Cargar", type=['xlsx'], key="f1", label_visibility="collapsed")
     with col_f2:
-        st.info("**PASO 2:** Subir Inventario Comparativo (FP/QX)")
-        f2 = st.file_uploader("Excel Comparar", type=['xlsx'], key="f2", label_visibility="collapsed")
+        st.info("📂 Archivo COMPARAR (FP/QX)")
+        f2 = st.file_uploader("Cargar", type=['xlsx'], key="f2", label_visibility="collapsed")
 
     if f1 and f2:
         try:
@@ -174,7 +173,6 @@ else:
             solo_en_fpqx = extra_df[extra_df['_merge'] == 'left_only'].drop(columns=['_merge'])
 
             # --- DASHBOARD ---
-            st.markdown("### 📊 Dashboard de Consistencia")
             m1, m2, m3, m4 = st.columns(4)
             diferencias = len(res_base[res_base['TOTAL_BAGO'] != res_base['TOTAL_FPQX']])
             codigos_faltantes = len(solo_en_fpqx)
@@ -183,9 +181,6 @@ else:
             m2.metric("Discrepancias", diferencias, delta_color="inverse")
             m3.metric("Faltantes en Bagó", codigos_faltantes, delta="⚠️ EXTRA", delta_color="inverse" if codigos_faltantes > 0 else "normal")
             m4.metric("Precisión", f"{round((1 - (codigos_faltantes/len(d1)))*100,1)}%" if len(d1)>0 else "0%")
-
-            if codigos_faltantes > 0:
-                st.warning(f"🚨 **ALERTA:** Se detectaron {codigos_faltantes} códigos en FP/QX que no existen en Bagó.")
 
             st.divider()
 
@@ -207,26 +202,21 @@ else:
                 res_final = res_final[res_final.apply(lambda row: row.astype(str).str.contains(busqueda, case=False).any(), axis=1)]
 
             if not res_final.empty:
-                # Asegurar Diferencia
                 if 'TOTAL_BAGO' not in res_final.columns: res_final['TOTAL_BAGO'] = 0
                 if 'TOTAL_FPQX' not in res_final.columns: res_final['TOTAL_FPQX'] = 0
                 res_final['DIFERENCIA'] = res_final['TOTAL_BAGO'] - res_final['TOTAL_FPQX']
-                
-                # Renombrar para usuario
                 res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
                 
-                # Tabla Dinámica
                 st.dataframe(
                     res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'] if 'DIFERENCIA' in res_final.columns else [])
                                    .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA'] if 'DIFERENCIA' in res_final.columns else []),
                     use_container_width=True
                 )
 
-                # Exportar
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     res_final.to_excel(writer, index=False)
-                st.download_button("📥 DESCARGAR ESTA VISTA EN EXCEL", data=output.getvalue(), file_name=f"Bago_{opcion_vista}.xlsx")
+                st.download_button("📥 DESCARGAR EXCEL", data=output.getvalue(), file_name=f"Bago_{opcion_vista}.xlsx")
             else:
                 st.info("No hay datos para esta selección.")
 
