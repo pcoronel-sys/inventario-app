@@ -43,9 +43,9 @@ st.divider()
 # --- CARGA DE ARCHIVOS ---
 c1, c2 = st.columns(2)
 with c1:
-    f1 = st.file_uploader("📂 Inventario 1", type=['xlsx'])
+    f1 = st.file_uploader("📂 Inventario BAGÓ", type=['xlsx'])
 with c2:
-    f2 = st.file_uploader("📂 Inventario 2", type=['xlsx'])
+    f2 = st.file_uploader("📂 Inventario FP/QX", type=['xlsx'])
 
 if f1 and f2:
     try:
@@ -72,13 +72,13 @@ if f1 and f2:
             d1 = procesar(df1)
             d2 = procesar(df2)
 
-            res = pd.merge(d1, d2, on=['MATERIAL', 'LOTE'], how='outer', suffixes=('_ANT', '_NUEVO')).fillna(0)
+            res = pd.merge(d1, d2, on=['MATERIAL', 'LOTE'], how='outer', suffixes=('_BAGO', '_FP/QX')).fillna(0)
             res['DIFERENCIA'] = res['TOTAL_NUEVO'] - res['TOTAL_ANT']
 
             if tiene_desc:
-                res['DESCRIPCION'] = res['DESCRIPCION_NUEVO'].replace(0, '')
-                res.loc[res['DESCRIPCION'] == '', 'DESCRIPCION'] = res['DESCRIPCION_ANT']
-                res = res.drop(columns=['DESCRIPCION_ANT', 'DESCRIPCION_NUEVO'])
+                res['DESCRIPCION'] = res['DESCRIPCION_FP/QX'].replace(0, '')
+                res.loc[res['DESCRIPCION'] == '', 'DESCRIPCION'] = res['DESCRIPCION_BAGO']
+                res = res.drop(columns=['DESCRIPCION_BAGO', 'DESCRIPCION_FP/QX'])
 
             # --- 📊 MÉTRICAS (SOLO LAS 3 QUE PEDISTE) ---
             st.markdown("### 📊 Resumen de Diferencias")
@@ -112,7 +112,7 @@ if f1 and f2:
 
             cols = ['MATERIAL', 'LOTE']
             if tiene_desc: cols.append('DESCRIPCION')
-            cols += ['TOTAL_ANT', 'TOTAL_NUEVO', 'DIFERENCIA']
+            cols += ['TOTAL_BAGO', 'TOTAL_FP/QX', 'DIFERENCIA']
             res_final = res_final[cols]
 
             # --- TABLA ---
