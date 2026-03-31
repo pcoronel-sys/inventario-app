@@ -128,13 +128,13 @@ if st.session_state.modo is None:
     
     with col_l:
         st.markdown(f'<p class="almacen-tag">ALMACÉN 1010</p>', unsafe_allow_html=True)
-        if st.button("📦\n\nEMPAQUE\n\n(Gestión por Lote)"):
+        if st.button("📦\n\n MATERIAL DE EMPAQUE\n\n"):
             st.session_state.modo = "con_lote"
             st.rerun()
             
     with col_r:
         st.markdown(f'<p class="almacen-tag">ALMACÉN 1070</p>', unsafe_allow_html=True)
-        if st.button("🔢\n\nPROMOCIONAL\n\n(Gestión Global)"):
+        if st.button("🔢\n\nMATERIAL PROMOCIONAL\n\n"):
             st.session_state.modo = "sin_lote"
             st.rerun()
 
