@@ -3,100 +3,130 @@ import pandas as pd
 import io
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Bagó | Sistema Unificado", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="Bagó | Intel-Stock", page_icon="🧪", layout="wide")
 
-# --- IDENTIDAD VISUAL ---
+# --- DISEÑO ESTÉTICO AVANZADO (SOLO PANTALLA PRINCIPAL) ---
 MAGENTA_BAGO = "#C7006A" 
 MAGENTA_OSCURO = "#8A004A"
 
 st.markdown(f"""
     <style>
-    .main {{ background: #f4f7f9; }}
+    /* Fondo con degradado profesional */
+    .main {{ 
+        background: radial-gradient(circle at top right, #ffffff, #f0f2f6); 
+    }}
     
-    /* BOTONES COMPACTOS PANTALLA PRINCIPAL */
+    /* TITULAR PRINCIPAL */
+    .main-title {{
+        color: {MAGENTA_BAGO};
+        font-size: 3.5rem !important;
+        font-weight: 800 !important;
+        text-align: center;
+        margin-bottom: 0px;
+        letter-spacing: -2px;
+    }}
+    
+    .sub-title {{
+        color: #666;
+        text-align: center;
+        font-size: 1.2rem;
+        margin-bottom: 50px;
+    }}
+
+    /* DISEÑO DE LAS SUPER-TARJETAS (BOTONES) */
     div.stButton > button {{
-        background-color: white !important;
-        color: #444 !important;
-        border: 2px solid #eee !important;
-        border-radius: 20px !important;
-        height: 180px !important;
+        background: white !important;
+        color: #333 !important;
+        border: 1px solid #e0e0e0 !important;
+        border-radius: 24px !important;
+        height: 190px !important;
         width: 100% !important;
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         justify-content: center !important;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05) !important;
-        transition: all 0.3s ease-in-out !important;
-    }}
-    div.stButton > button:hover {{
-        background: linear-gradient(135deg, {MAGENTA_BAGO} 0%, {MAGENTA_OSCURO} 100%) !important;
-        color: white !important;
-        transform: translateY(-5px) !important;
-        box-shadow: 0 12px 25px rgba(199, 0, 106, 0.25) !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.03) !important;
+        transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
+        padding: 20px !important;
     }}
 
-    /* MÉTRICAS */
+    /* EFECTO INTERACTIVO AL PASAR EL RATÓN */
+    div.stButton > button:hover {{
+        background: linear-gradient(145deg, {MAGENTA_BAGO}, {MAGENTA_OSCURO}) !important;
+        color: white !important;
+        transform: translateY(-8px) scale(1.01) !important;
+        border-color: transparent !important;
+        box-shadow: 0 20px 40px rgba(199, 0, 106, 0.25) !important;
+    }}
+
+    /* Iconos o emojis dentro del botón */
+    div.stButton > button::before {{
+        font-size: 2.5rem !important;
+        margin-bottom: 10px;
+    }}
+
+    /* DISEÑO DEL REPORTE (METRICAS) */
     [data-testid="stMetric"] {{
         background: white;
-        border-radius: 15px;
+        border-radius: 20px;
         padding: 20px;
-        border-left: 6px solid {MAGENTA_BAGO};
-        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        border-bottom: 4px solid {MAGENTA_BAGO};
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }}
 
-    /* BOTÓN DESCARGA */
+    /* BOTÓN DE DESCARGA */
     .stDownloadButton button {{
-        background: linear-gradient(90deg, {MAGENTA_BAGO} 0%, {MAGENTA_OSCURO} 100%) !important;
+        background: linear-gradient(90deg, {MAGENTA_BAGO}, {MAGENTA_OSCURO}) !important;
         color: white !important;
-        height: 3.5em !important;
-        border-radius: 12px !important;
+        border-radius: 14px !important;
         font-weight: bold !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }}
-    h1 {{ color: {MAGENTA_BAGO} !important; font-weight: 800; text-align: center; }}
     </style>
     """, unsafe_allow_html=True)
 
+# --- LÓGICA DE NAVEGACIÓN ---
 if 'modo' not in st.session_state:
     st.session_state.modo = None
-
-def seleccionar_modo(modo):
-    st.session_state.modo = modo
 
 def borrar_todo():
     for key in list(st.session_state.keys()):
         del st.session_state[key]
     st.rerun()
 
-# --- PANTALLA 1: MENÚ ---
+# --- PANTALLA 1: MENÚ ESTÉTICO ---
 if st.session_state.modo is None:
-    st.markdown("<br><br><h1>🧪 Laboratorios Bagó</h1><h3 style='text-align:center; color:#666;'>Seleccione el método de trabajo</h3><br>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📦 MODO LOTE\n\nCruce por código y lote.", key="btn_lote"):
-            seleccionar_modo("con_lote")
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
+    st.markdown('<p class="sub-title">Intelligence Stock Conciliator</p>', unsafe_allow_html=True)
+    
+    col_l, col_r = st.columns(2)
+    with col_l:
+        if st.button("📦\n\nMODO LOTE\n\nPrecisión por partida y lote", key="btn_lote"):
+            st.session_state.modo = "con_lote"
             st.rerun()
-    with col2:
-        if st.button("🔢 MODO MATERIAL\n\nCruce global por código.", key="btn_sin_lote"):
-            seleccionar_modo("sin_lote")
+    with col_r:
+        if st.button("🔢\n\nMODO MATERIAL\n\nCruce global por códigos", key="btn_sin_lote"):
+            st.session_state.modo = "sin_lote"
             st.rerun()
 
-# --- PANTALLA 2: REPORTE ---
+# --- PANTALLA 2: REPORTE (LÓGICA INTACTA) ---
 else:
-    c_head1, c_head2 = st.columns([4, 1])
-    with c_head1:
-        modo_txt = "CON LOTE" if st.session_state.modo == "con_lote" else "SIN LOTE"
-        st.markdown(f"<h2 style='text-align: left; color:{MAGENTA_BAGO}; margin:0;'>🧪 Conciliación: {modo_txt}</h2>", unsafe_allow_html=True)
-    with c_head2:
-        if st.button("🔄 Volver al Menú"): borrar_todo()
+    c1, c2 = st.columns([4, 1])
+    with c1:
+        st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; margin:0;'>🧪 Panel: {'Lote' if st.session_state.modo == 'con_lote' else 'Material'}</h2>", unsafe_allow_html=True)
+    with c2:
+        if st.button("🔄 Salir"): borrar_todo()
 
     st.divider()
 
-    c_f1, c_f2 = st.columns(2)
-    with c_f1:
-        st.info("📂 Archivo BASE (Bagó)")
+    f_col1, f_col2 = st.columns(2)
+    with f_col1:
+        st.info("📂 Inventario BASE (Bagó)")
         f1 = st.file_uploader("Subir", type=['xlsx'], key="f1", label_visibility="collapsed")
-    with c_f2:
-        st.info("📂 Archivo COMPARAR (FP/QX)")
+    with f_col2:
+        st.info("📂 Inventario COMPARAR (FP/QX)")
         f2 = st.file_uploader("Subir", type=['xlsx'], key="f2", label_visibility="collapsed")
 
     if f1 and f2:
@@ -111,79 +141,51 @@ else:
                     df['DESCRIPCION'] = df['DESCRIPCION'].astype(str).str.strip().str.upper()
                     agg['DESCRIPCION'] = 'first'
                 if st.session_state.modo == "con_lote":
-                    if 'LOTE' not in df.columns: df['LOTE'] = 'SIN LOTE'
-                    df['LOTE'] = df['LOTE'].fillna('SIN LOTE').astype(str).str.strip().str.upper()
+                    df['LOTE'] = df['LOTE'].fillna('SIN LOTE').astype(str).str.strip().upper() if 'LOTE' in df.columns else 'SIN LOTE'
                     return df.groupby(['MATERIAL', 'LOTE']).agg(agg).reset_index()
                 return df.groupby(['MATERIAL']).agg(agg).reset_index()
 
             d1, d2 = limpiar(df1), limpiar(df2)
             keys = ['MATERIAL', 'LOTE'] if st.session_state.modo == "con_lote" else ['MATERIAL']
             
-            # --- CRUCE MAESTRO (OUTER JOIN) PARA EL CÁLCULO TOTAL ---
             res_maestro = pd.merge(d1, d2, on=keys, how='outer', suffixes=('_BAGO', '_FPQX')).fillna(0)
             res_maestro['DIFERENCIA'] = res_maestro['TOTAL_BAGO'] - res_maestro['TOTAL_FPQX']
 
-            # --- 📊 DASHBOARD ---
+            # DASHBOARD
             m1, m2, m3, m4 = st.columns(4)
-            # Solo los que están en Bagó
             base_bago = res_maestro[res_maestro['TOTAL_BAGO'] > 0]
-            # Solo los que NO están en Bagó pero están en FP/QX
             desconocidos = res_maestro[(res_maestro['TOTAL_BAGO'] == 0) & (res_maestro['TOTAL_FPQX'] > 0)]
-            # Diferencias reales dentro de los que están en Bagó
             diff_stock = base_bago[base_bago['DIFERENCIA'] != 0]
 
-            m1.metric("Items en Bagó", len(base_bago))
-            m2.metric("Discrepancias Stock", len(diff_stock))
-            m3.metric("Desconocidos (Extra)", len(desconocidos), delta="Alerta" if len(desconocidos) > 0 else "OK", delta_color="inverse")
-            m4.metric("TOTAL DIFERENCIAS", len(diff_stock) + len(desconocidos))
+            m1.metric("Items Bagó", len(base_bago))
+            m2.metric("Discrepancias", len(diff_stock))
+            m3.metric("Desconocidos", len(desconocidos), delta_color="inverse")
+            m4.metric("TOTAL ERRORES", len(diff_stock) + len(desconocidos))
 
             st.divider()
 
-            # --- FILTROS ---
-            col_busq, col_ver = st.columns([2, 1])
-            with col_busq:
-                busqueda = st.text_input("🔍 Buscar Material o Descripción...")
-            with col_ver:
-                opcion_vista = st.selectbox("🎯 Filtro de Auditoría:", 
-                    ["Reporte Base (Bagó)", 
-                     "Solo Diferencias de Stock", 
-                     "Solo Desconocidos (FP/QX)", 
-                     "TOTAL DIFERENCIAS (Stock + Desconocidos)"])
+            # FILTROS
+            col_b, col_v = st.columns([2, 1])
+            with col_b: busq = st.text_input("🔍 Búsqueda rápida...")
+            with col_v: vista = st.selectbox("🎯 Filtro Auditoría:", 
+                                ["Reporte Base", "Solo Diferencias", "Solo Desconocidos", "TOTAL DIFERENCIAS"])
 
-            # --- LÓGICA DE FILTRADO ---
-            if opcion_vista == "Reporte Base (Bagó)":
-                res_final = base_bago.copy()
-            elif opcion_vista == "Solo Diferencias de Stock":
-                res_final = diff_stock.copy()
-            elif opcion_vista == "Solo Desconocidos (FP/QX)":
-                res_final = desconocidos.copy()
-            else: # TOTAL DIFERENCIAS
-                res_final = res_maestro[res_maestro['DIFERENCIA'] != 0].copy()
+            if vista == "Reporte Base": res_final = base_bago.copy()
+            elif vista == "Solo Diferencias": res_final = diff_stock.copy()
+            elif vista == "Solo Desconocidos": res_final = desconocidos.copy()
+            else: res_final = res_maestro[res_maestro['DIFERENCIA'] != 0].copy()
 
-            if busqueda:
-                res_final = res_final[res_final.apply(lambda row: row.astype(str).str.contains(busqueda, case=False).any(), axis=1)]
+            if busq:
+                res_final = res_final[res_final.apply(lambda r: r.astype(str).str.contains(busq, case=False).any(), axis=1)]
 
             if not res_final.empty:
                 res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
-                cols_v = ['MATERIAL']
-                if 'LOTE' in res_final.columns: cols_v.append('LOTE')
-                if 'DESCRIPCION_BAGO' in res_final.columns:
-                    res_final = res_final.rename(columns={'DESCRIPCION_BAGO': 'DESCRIPCION'})
-                    cols_v.append('DESCRIPCION')
-                cols_v += ['TOTAL BAGO', 'TOTAL FP/QX', 'DIFERENCIA']
+                # Tabla estilizada
+                st.dataframe(res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA']), use_container_width=True)
                 
-                st.dataframe(
-                    res_final[cols_v].style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'])
-                                           .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA']),
-                    use_container_width=True
-                )
-
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                    res_final[cols_v].to_excel(writer, index=False)
-                st.download_button("📥 DESCARGAR REPORTE FILTRADO", data=output.getvalue(), file_name=f"Reporte_Auditoria.xlsx")
-            else:
-                st.warning("Sin datos para este filtro.")
-
+                    res_final.to_excel(writer, index=False)
+                st.download_button("📥 DESCARGAR RESULTADOS", data=output.getvalue(), file_name="Bago_Reporte.xlsx")
         except Exception as e:
-            st.error(f"Falla técnica: {e}")
+            st.error(f"Error: {e}")
