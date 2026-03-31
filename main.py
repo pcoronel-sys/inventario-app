@@ -3,7 +3,7 @@ import pandas as pd
 import io
 
 # --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="Inventario Bagó | Unificado", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="Inventario Bagó | Filtros Pro", page_icon="🧪", layout="wide")
 
 # --- IDENTIDAD VISUAL ---
 MAGENTA_BAGO = "#C7006A" 
@@ -18,19 +18,9 @@ st.markdown(f"""
         border-left: 6px solid {MAGENTA_BAGO};
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }}
-    /* Botones del Menú y Filtros */
-    .stButton > button {{
-        background: white !important;
-        color: {MAGENTA_BAGO} !important;
-        border: 2px solid {MAGENTA_BAGO} !important;
-        border-radius: 10px !important;
-        font-weight: bold !important;
-        transition: all 0.3s ease !important;
-        width: 100%;
-    }}
-    .stButton > button:hover {{
-        background: {MAGENTA_BAGO} !important;
-        color: white !important;
+    /* Estilo de los Selectores y Buscadores */
+    .stSelectbox, .stTextInput {{
+        color: {MAGENTA_BAGO};
     }}
     /* Botón de Descarga */
     .stDownloadButton button {{
@@ -42,6 +32,14 @@ st.markdown(f"""
         border: none !important;
         font-weight: bold !important;
     }}
+    /* Botón Reiniciar */
+    .stButton button {{
+        background: #212529 !important;
+        color: white !important;
+        border-radius: 10px !important;
+        height: 3.5em !important;
+        width: 100% !important;
+    }}
     h1, h2, h3 {{ color: {MAGENTA_BAGO} !important; text-align: center; font-weight: 800; }}
     </style>
     """, unsafe_allow_html=True)
@@ -49,8 +47,6 @@ st.markdown(f"""
 # --- NAVEGACIÓN ---
 if 'modo' not in st.session_state:
     st.session_state.modo = None
-if 'filtro_boton' not in st.session_state:
-    st.session_state.filtro_boton = "Todos"
 
 def seleccionar_modo(modo):
     st.session_state.modo = modo
@@ -64,18 +60,18 @@ def borrar_todo():
 if st.session_state.modo is None:
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.title("🧪 Sistema de Conciliación Bagó")
-    st.markdown("### Seleccione el método para unificar códigos:")
+    st.markdown("### Seleccione el método de cruce:")
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("📦 UNIFICAR POR MATERIAL + LOTE"):
+        if st.button("📦 CRUCE POR MATERIAL + LOTE"):
             seleccionar_modo("con_lote")
             st.rerun()
     with col2:
-        if st.button("🔢 UNIFICAR SOLO POR MATERIAL"):
+        if st.button("🔢 CRUCE SOLO POR MATERIAL"):
             seleccionar_modo("sin_lote")
             st.rerun()
 
-# --- APLICACIÓN ---
+# --- APLICACIÓN PRINCIPAL ---
 else:
     modo_txt = "CON LOTE" if st.session_state.modo == "con_lote" else "SIN LOTE"
     st.title(f"🧪 Reporte Unificado {modo_txt}")
@@ -85,9 +81,10 @@ else:
 
     st.divider()
 
+    # Carga de archivos
     c1, c2 = st.columns(2)
     with c1:
-        f1 = st.file_uploader("📂 Archivo PRINCIPAL (Base Bagó)", type=['xlsx'], key="f1")
+        f1 = st.file_uploader("📂 Archivo BASE (Bagó - Manda cantidad de filas)", type=['xlsx'], key="f1")
     with c2:
         f2 = st.file_uploader("📂 Archivo COMPARATIVO (FP/QX)", type=['xlsx'], key="f2")
 
@@ -114,12 +111,12 @@ else:
             d1 = limpiar_y_agrupar(df1)
             d2 = limpiar_y_agrupar(df2)
 
-            # --- LEFT JOIN (Mantiene los 188 registros de Bagó) ---
+            # --- LEFT JOIN (Para mantener exactamente las filas de Bagó) ---
             keys = ['MATERIAL', 'LOTE'] if st.session_state.modo == "con_lote" else ['MATERIAL']
             res = pd.merge(d1, d2, on=keys, how='left', suffixes=('_BAGO', '_FPQX')).fillna(0)
             res['DIFERENCIA'] = res['TOTAL_BAGO'] - res['TOTAL_FPQX']
 
-            # Métricas
+            # Métricas rápidas
             st.markdown("### 📊 Resumen Ejecutivo")
             m1, m2, m3 = st.columns(3)
             m1.metric("Registros Base", len(res))
@@ -128,56 +125,64 @@ else:
 
             st.divider()
 
-            # --- BOTONES DE FILTRO RÁPIDO ---
-            st.markdown("#### 🛠️ Filtros de Vista")
-            f_col1, f_col2, f_col3 = st.columns(3)
-            with f_col1:
-                if st.button("📄 MOSTRAR TODO"): st.session_state.filtro_boton = "Todos"
-            with f_col2:
-                if st.button("⚠️ SOLO DIFERENCIAS"): st.session_state.filtro_boton = "Diferencias"
-            with f_col3:
-                if st.button("✅ SIN DIFERENCIAS"): st.session_state.filtro_boton = "Iguales"
+            # --- SECCIÓN DE FILTROS DESPLEGABLES ---
+            st.markdown("#### 🛠️ Filtros de Análisis")
+            col_f1, col_f2 = st.columns([2, 1])
+            
+            with col_f1:
+                busqueda = st.text_input("🔍 Buscar por Código o Descripción:", placeholder="Ej: 100234...")
+            
+            with col_f2:
+                filtro_estado = st.selectbox(
+                    "🎯 Filtrar por Estado:",
+                    ["Mostrar Todo", "Solo con Diferencias", "Sin Diferencias (OK)"]
+                )
 
-            # Buscador de texto
-            busq = st.text_input("🔍 O busca manualmente (Código o Descripción):")
-
-            # Lógica de Filtrado Combinada
+            # --- LÓGICA DE FILTRADO ---
             res_final = res.copy()
             
-            if st.session_state.filtro_boton == "Diferencias":
+            # 1. Filtro por Estado
+            if filtro_estado == "Solo con Diferencias":
                 res_final = res_final[res_final['DIFERENCIA'] != 0]
-            elif st.session_state.filtro_boton == "Iguales":
+            elif filtro_estado == "Sin Diferencias (OK)":
                 res_final = res_final[res_final['DIFERENCIA'] == 0]
             
-            if busq:
-                res_final = res_final[res_final.apply(lambda row: row.astype(str).str.contains(busq, case=False).any(), axis=1)]
+            # 2. Filtro por Texto
+            if busqueda:
+                # Busca en todas las columnas de texto
+                res_final = res_final[res_final.apply(lambda row: row.astype(str).str.contains(busqueda, case=False).any(), axis=1)]
 
-            # Formatear columnas
-            cols = ['MATERIAL']
-            if 'LOTE' in res_final.columns: cols.append('LOTE')
+            # Limpiar nombres de columnas para la vista
             if 'DESCRIPCION_BAGO' in res_final.columns:
                 res_final = res_final.rename(columns={'DESCRIPCION_BAGO': 'DESCRIPCION'})
-                cols.append('DESCRIPCION')
-            cols += ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']
-            res_final = res_final[cols]
+            
+            cols_vista = ['MATERIAL']
+            if 'LOTE' in res_final.columns: cols_vista.append('LOTE')
+            if 'DESCRIPCION' in res_final.columns: cols_vista.append('DESCRIPCION')
+            cols_vista += ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']
+            
+            res_final = res_final[cols_vista]
 
-            # Tabla
+            # --- TABLA DE RESULTADOS ---
             st.dataframe(
                 res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'])
                                .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA']),
                 use_container_width=True
             )
 
-            # Acciones finales
+            # --- ACCIONES FINALES ---
             st.divider()
             c_d, c_r = st.columns([0.7, 0.3])
             with c_d:
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     res_final.to_excel(writer, index=False)
-                st.download_button("📥 DESCARGAR REPORTE", data=output.getvalue(), file_name=f"Reporte_Bago.xlsx")
+                st.download_button("📥 DESCARGAR REPORTE FILTRADO", data=output.getvalue(), file_name=f"Reporte_Bago.xlsx")
             with c_r:
-                if st.button("🔄 REINICIAR"): borrar_todo()
+                if st.button("🔄 REINICIAR"):
+                    borrar_todo()
 
         except Exception as e:
-            st.error(f"Error: {e}")
+            st.error(f"Error procesando archivos: {e}")
+    else:
+        st.info(f"Suba los archivos para iniciar la conciliación {modo_txt}")
