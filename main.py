@@ -141,4 +141,49 @@ else:
 
             # --- FILTROS ---
             col_busq, col_ver = st.columns([2, 1])
-            with
+            with col_busq:
+                busqueda = st.text_input("🔍 Buscar Material o Descripción...")
+            with col_ver:
+                opcion_vista = st.selectbox("🎯 Filtro de Auditoría:", 
+                    ["Reporte Base (Bagó)", 
+                     "Solo Diferencias de Stock", 
+                     "Solo Desconocidos (FP/QX)", 
+                     "TOTAL DIFERENCIAS (Stock + Desconocidos)"])
+
+            # --- LÓGICA DE FILTRADO ---
+            if opcion_vista == "Reporte Base (Bagó)":
+                res_final = base_bago.copy()
+            elif opcion_vista == "Solo Diferencias de Stock":
+                res_final = diff_stock.copy()
+            elif opcion_vista == "Solo Desconocidos (FP/QX)":
+                res_final = desconocidos.copy()
+            else: # TOTAL DIFERENCIAS
+                res_final = res_maestro[res_maestro['DIFERENCIA'] != 0].copy()
+
+            if busqueda:
+                res_final = res_final[res_final.apply(lambda row: row.astype(str).str.contains(busqueda, case=False).any(), axis=1)]
+
+            if not res_final.empty:
+                res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
+                cols_v = ['MATERIAL']
+                if 'LOTE' in res_final.columns: cols_v.append('LOTE')
+                if 'DESCRIPCION_BAGO' in res_final.columns:
+                    res_final = res_final.rename(columns={'DESCRIPCION_BAGO': 'DESCRIPCION'})
+                    cols_v.append('DESCRIPCION')
+                cols_v += ['TOTAL BAGO', 'TOTAL FP/QX', 'DIFERENCIA']
+                
+                st.dataframe(
+                    res_final[cols_v].style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'])
+                                           .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA']),
+                    use_container_width=True
+                )
+
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    res_final[cols_v].to_excel(writer, index=False)
+                st.download_button("📥 DESCARGAR REPORTE FILTRADO", data=output.getvalue(), file_name=f"Reporte_Auditoria.xlsx")
+            else:
+                st.warning("Sin datos para este filtro.")
+
+        except Exception as e:
+            st.error(f"Falla técnica: {e}")
