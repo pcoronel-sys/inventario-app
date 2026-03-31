@@ -125,7 +125,7 @@ if st.session_state.modo is None:
     st.markdown("<h3 style='text-align:center; color:#555; font-weight:300; margin-bottom:60px;'>Intel-Stock Management Ecosystem</h3>", unsafe_allow_html=True)
     
     # Grid central imponente
-    _, col_l, col_r, _ = st.columns([2.5, 2.5, 2.5, 2.5])
+    _, col_l, col_r, _ = st.columns([6.5, 1.8, 1.8, 6.5])
     
     with col_l:
         st.markdown(f'<p class="almacen-tag">ALMACÉN 1010</p>', unsafe_allow_html=True)
