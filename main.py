@@ -5,22 +5,23 @@ import io
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Bagó | Intel-Stock", page_icon="🧪", layout="wide")
 
-# --- DISEÑO ESTÉTICO CENTRADO ---
+# --- DISEÑO ESTÉTICO AVANZADO (SOLO PANTALLA PRINCIPAL) ---
 MAGENTA_BAGO = "#C7006A" 
 MAGENTA_OSCURO = "#8A004A"
 
 st.markdown(f"""
     <style>
+    /* Fondo con degradado profesional */
     .main {{ 
         background: radial-gradient(circle at top right, #ffffff, #f0f2f6); 
     }}
     
+    /* TITULAR PRINCIPAL */
     .main-title {{
         color: {MAGENTA_BAGO};
         font-size: 3.5rem !important;
         font-weight: 800 !important;
         text-align: center;
-        margin-top: 50px;
         margin-bottom: 0px;
         letter-spacing: -2px;
     }}
@@ -29,35 +30,39 @@ st.markdown(f"""
         color: #666;
         text-align: center;
         font-size: 1.2rem;
-        margin-bottom: 40px;
+        margin-bottom: 50px;
     }}
 
-    /* CONTENEDOR PARA CENTRAR BOTONES */
-    .center-container {{
-        display: flex;
-        justify-content: center;
-        align-items: center;
-    }}
-
-    /* ESTILO DE LOS BOTONES TIPO TARJETA */
+    /* DISEÑO DE LAS SUPER-TARJETAS (BOTONES) */
     div.stButton > button {{
         background: white !important;
         color: #333 !important;
         border: 1px solid #e0e0e0 !important;
         border-radius: 24px !important;
-        height: 200px !important;
+        height: 190px !important;
         width: 100% !important;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        justify-content: center !important;
         box-shadow: 0 10px 30px rgba(0,0,0,0.03) !important;
         transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1) !important;
-        font-size: 1.1rem !important;
-        font-weight: 700 !important;
+        padding: 20px !important;
     }}
 
+    /* EFECTO INTERACTIVO AL PASAR EL RATÓN */
     div.stButton > button:hover {{
         background: linear-gradient(145deg, {MAGENTA_BAGO}, {MAGENTA_OSCURO}) !important;
         color: white !important;
-        transform: translateY(-8px) !important;
+        transform: translateY(-8px) scale(1.01) !important;
+        border-color: transparent !important;
         box-shadow: 0 20px 40px rgba(199, 0, 106, 0.25) !important;
+    }}
+
+    /* Iconos o emojis dentro del botón */
+    div.stButton > button::before {{
+        font-size: 2.5rem !important;
+        margin-bottom: 10px;
     }}
 
     /* DISEÑO DEL REPORTE (METRICAS) */
@@ -69,11 +74,14 @@ st.markdown(f"""
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     }}
 
+    /* BOTÓN DE DESCARGA */
     .stDownloadButton button {{
         background: linear-gradient(90deg, {MAGENTA_BAGO}, {MAGENTA_OSCURO}) !important;
         color: white !important;
         border-radius: 14px !important;
         font-weight: bold !important;
+        text-transform: uppercase;
+        letter-spacing: 1px;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -87,24 +95,23 @@ def borrar_todo():
         del st.session_state[key]
     st.rerun()
 
-# --- PANTALLA 1: MENÚ CENTRADO ---
+# --- PANTALLA 1: MENÚ ESTÉTICO ---
 if st.session_state.modo is None:
+    st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
     st.markdown('<p class="sub-title">Intelligence Stock Conciliator</p>', unsafe_allow_html=True)
     
-    # Usamos columnas para crear un margen y centrar los dos botones en el medio
-    _, col_l, col_r, _ = st.columns([1, 2, 2, 1])
-    
+    col_l, col_r = st.columns(2)
     with col_l:
-        if st.button("📦\n\nMODO LOTE\n\nPrecisión por partida", key="btn_lote"):
+        if st.button("📦\n\nMODO LOTE\n\nPrecisión por partida y lote", key="btn_lote"):
             st.session_state.modo = "con_lote"
             st.rerun()
     with col_r:
-        if st.button("🔢\n\nMODO MATERIAL\n\nCruce por códigos", key="btn_sin_lote"):
+        if st.button("🔢\n\nMODO MATERIAL\n\nCruce global por códigos", key="btn_sin_lote"):
             st.session_state.modo = "sin_lote"
             st.rerun()
 
-# --- PANTALLA 2: REPORTE ---
+# --- PANTALLA 2: REPORTE (LÓGICA INTACTA) ---
 else:
     c1, c2 = st.columns([4, 1])
     with c1:
@@ -173,6 +180,7 @@ else:
 
             if not res_final.empty:
                 res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
+                # Tabla estilizada
                 st.dataframe(res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA']), use_container_width=True)
                 
                 output = io.BytesIO()
