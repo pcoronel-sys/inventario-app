@@ -191,4 +191,44 @@ else:
 
             # --- FILTROS ---
             col_busq, col_ver = st.columns([2, 1])
-            with col_bus
+            with col_busq:
+                busqueda = st.text_input("🔍 Buscar Material o Descripción...")
+            with col_ver:
+                opcion_vista = st.selectbox("🎯 Vista:", ["Reporte Base (Bagó)", "Solo Diferencias", "Ver Desconocidos (Solo FP/QX)"])
+
+            if opcion_vista == "Reporte Base (Bagó)":
+                res_final = res_base.copy()
+            elif opcion_vista == "Solo Diferencias":
+                res_final = res_base[res_base['TOTAL_BAGO'] != res_base['TOTAL_FPQX']]
+            else:
+                res_final = solo_en_fpqx.copy()
+
+            if busqueda:
+                res_final = res_final[res_final.apply(lambda row: row.astype(str).str.contains(busqueda, case=False).any(), axis=1)]
+
+            if not res_final.empty:
+                # Asegurar Diferencia
+                if 'TOTAL_BAGO' not in res_final.columns: res_final['TOTAL_BAGO'] = 0
+                if 'TOTAL_FPQX' not in res_final.columns: res_final['TOTAL_FPQX'] = 0
+                res_final['DIFERENCIA'] = res_final['TOTAL_BAGO'] - res_final['TOTAL_FPQX']
+                
+                # Renombrar para usuario
+                res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
+                
+                # Tabla Dinámica
+                st.dataframe(
+                    res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'] if 'DIFERENCIA' in res_final.columns else [])
+                                   .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA'] if 'DIFERENCIA' in res_final.columns else []),
+                    use_container_width=True
+                )
+
+                # Exportar
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    res_final.to_excel(writer, index=False)
+                st.download_button("📥 DESCARGAR ESTA VISTA EN EXCEL", data=output.getvalue(), file_name=f"Bago_{opcion_vista}.xlsx")
+            else:
+                st.info("No hay datos para esta selección.")
+
+        except Exception as e:
+            st.error(f"Falla técnica: {e}")
