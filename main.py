@@ -1,72 +1,63 @@
 import streamlit as st
 import pandas as pd
 import io
-from datetime import datetime
 
-# --- CONFIGURACIÓN DE PÁGINA (Layout Wide es Clave) ---
+# --- CONFIGURACIÓN ---
 st.set_page_config(page_title="Bagó | Intel-Stock Pro", page_icon="🧪", layout="wide")
 
-# --- DISEÑO ULTRA-COMPACTO ---
+# --- DISEÑO EQUILIBRADO ---
 MAGENTA_BAGO = "#C7006A" 
 MAGENTA_OSCURO = "#8A004A"
 
 st.markdown(f"""
     <style>
-    /* 1. Eliminar el espacio superior por defecto de Streamlit */
-    .block-container {{ padding-top: 1rem !important; padding-bottom: 0rem !important; }}
+    /* Reset de espacios para evitar el scroll */
+    .block-container {{ padding-top: 2rem !important; padding-bottom: 0rem !important; }}
+    .main {{ background: white; }}
     
-    .main {{ background: radial-gradient(circle at center, #ffffff 0%, #f0f2f6 100%); }}
-    
-    /* Título Compacto */
+    /* Título Elegante */
     .hero-title {{
         color: {MAGENTA_BAGO};
-        font-size: 3rem !important;
+        font-size: 3.5rem !important;
         font-weight: 900 !important;
         text-align: center;
-        margin-top: 0px;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         letter-spacing: -2px;
     }}
 
-    /* BOTONES DE INICIO COMPACTOS */
+    /* BOTONES GLASSMorphism (Tamaño Justo) */
     div.stButton > button {{
-        background: rgba(255, 255, 255, 0.7) !important;
-        backdrop-filter: blur(10px) !important;
-        border-radius: 25px !important;
-        height: 140px !important; /* Altura reducida a la mitad */
-        box-shadow: 0 10px 20px rgba(0,0,0,0.05) !important;
-        transition: all 0.4s ease !important;
-        font-weight: 700 !important;
+        background: rgba(248, 249, 252, 0.8) !important;
+        border: 1px solid #eee !important;
+        border-radius: 30px !important;
+        height: 220px !important;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.05) !important;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+        font-size: 1.2rem !important;
+        font-weight: 800 !important;
     }}
 
     div.stButton > button:hover {{
-        background: linear-gradient(135deg, {MAGENTA_BAGO} 0%, {MAGENTA_OSCURO} 100%) !important;
+        background: linear-gradient(145deg, {MAGENTA_BAGO}, {MAGENTA_OSCURO}) !important;
         color: white !important;
-        transform: translateY(-5px) !important;
+        transform: translateY(-10px) !important;
+        box-shadow: 0 20px 40px rgba(199, 0, 106, 0.2) !important;
     }}
 
-    /* MÉTRICAS COMPACTAS */
+    /* MÉTRICAS FLOTANTES */
     div[data-testid="stMetric"] {{
-        background: white !important;
-        border-radius: 15px !important;
-        padding: 10px 15px !important; /* Menos relleno */
-        border-bottom: 4px solid {MAGENTA_BAGO} !important;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.03) !important;
+        background: #f8f9fc !important;
+        border-radius: 20px !important;
+        padding: 15px !important;
+        border-left: 5px solid {MAGENTA_BAGO} !important;
     }}
 
-    /* TABLA AJUSTADA AL ALTO DE PANTALLA */
-    .stDataFrame {{
-        max-height: 400px !important; /* Evita que la tabla empuje todo hacia abajo */
-    }}
-
-    /* Texto de pasos pequeño */
-    .step-card {{
-        background: white;
-        border-radius: 15px;
-        padding: 10px;
-        font-size: 0.85rem;
+    /* Footer sutil */
+    .footer-text {{
         text-align: center;
-        border-bottom: 2px solid {MAGENTA_BAGO};
+        color: #bbb;
+        font-size: 0.8rem;
+        margin-top: 20px;
     }}
     </style>
     """, unsafe_allow_html=True)
@@ -78,50 +69,43 @@ def reset():
     for k in list(st.session_state.keys()): del st.session_state[k]
     st.rerun()
 
-# --- PANTALLA 1: INICIO COMPACTO ---
+# --- PANTALLA 1: INICIO ESTÉTICO ---
 if st.session_state.modo is None:
-    st.markdown('<p style="text-align:center; color:#888; font-size:0.9rem; margin-bottom:0;">Intelligence System</p>', unsafe_allow_html=True)
     st.markdown('<p class="hero-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
+    st.markdown("<p style='text-align:center; color:#888; font-size:1.2rem; margin-bottom:40px;'>Seleccione el centro de costos para iniciar la auditoría</p>", unsafe_allow_html=True)
     
-    _, col1, col2, _ = st.columns([3, 2, 2, 3])
+    # Grid central
+    _, col1, col2, _ = st.columns([2, 3, 3, 2])
     
     with col1:
-        st.markdown(f"<p style='text-align:center; color:{MAGENTA_BAGO}; font-weight:bold; font-size:0.8rem; margin-bottom:5px;'>BODEGA 1010</p>", unsafe_allow_html=True)
-        if st.button("📦 EMPAQUE\n(LOTE)"):
+        if st.button("📦\n\nALMACÉN 1010\n\nMaterial de Empaque"):
             st.session_state.modo = "con_lote"
             st.rerun()
             
     with col2:
-        st.markdown(f"<p style='text-align:center; color:{MAGENTA_BAGO}; font-weight:bold; font-size:0.8rem; margin-bottom:5px;'>BODEGA 1070</p>", unsafe_allow_html=True)
-        if st.button("🔢 PROMOCIONAL\n(MATERIAL)"):
+        if st.button("🔢\n\nALMACÉN 1070\n\nMaterial Promocional"):
             st.session_state.modo = "sin_lote"
             st.rerun()
 
-    # Pasos en una sola línea compacta
-    st.markdown("<br>", unsafe_allow_html=True)
-    f1, f2, f3 = st.columns(3)
-    with f1: st.markdown("<div class='step-card'><b>1. CONEXIÓN:</b> Sube archivos</div>", unsafe_allow_html=True)
-    with f2: st.markdown("<div class='step-card'><b>2. PROCESO:</b> Cruce automático</div>", unsafe_allow_html=True)
-    with f3: st.markdown("<div class='step-card'><b>3. AUDIT:</b> Baja el reporte</div>", unsafe_allow_html=True)
+    st.markdown('<p class="footer-text">Intel-Stock System v3.0 | Propiedad de Laboratorios Bagó</p>', unsafe_allow_html=True)
 
-# --- PANTALLA 2: DASHBOARD TODO EN UNO ---
+# --- PANTALLA 2: DASHBOARD PROFESIONAL ---
 else:
     with st.sidebar:
-        st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; font-size:1.2rem; margin:0;'>⚙️ Controles</h2>", unsafe_allow_html=True)
-        st.caption(f"Modo: {'Lote' if st.session_state.modo == 'con_lote' else 'Material'}")
+        st.markdown(f"<h1 style='color:{MAGENTA_BAGO};'>⚙️ Filtros</h1>", unsafe_allow_html=True)
+        st.info(f"📍 {'Empaque (Lote)' if st.session_state.modo == 'con_lote' else 'Promocional'}")
+        busq = st.text_input("🔍 Buscar ítem...")
+        vista = st.selectbox("Vista:", ["Diferencias", "Todo", "No en Base"])
         st.divider()
-        busq = st.text_input("🔍 Buscar...", placeholder="Escribe...")
-        vista = st.selectbox("🎯 Vista:", ["Diferencias", "Todo", "No en Base"])
         if st.button("🏠 Inicio"): reset()
-        st.divider()
-        # Botón de descarga aquí para ahorrar espacio central
-        st.write("---")
 
-    # Header y Carga en una sola línea para ahorrar espacio
-    head1, head2, head3 = st.columns([2, 2, 2])
-    with head1: st.markdown(f"<h3 style='color:{MAGENTA_BAGO}; margin:0;'>📊 Panel</h3>", unsafe_allow_html=True)
-    with head2: f1 = st.file_uploader("Base Bagó", type=['xlsx'], key="f1", label_visibility="collapsed")
-    with head3: f2 = st.file_uploader("FP/QX", type=['xlsx'], key="f2", label_visibility="collapsed")
+    # Layout de reporte compacto pero aireado
+    row1_1, row1_2 = st.columns([2, 4])
+    with row1_1: st.markdown(f"<h2 style='color:{MAGENTA_BAGO}; margin:0;'>📊 Dashboard</h2>", unsafe_allow_html=True)
+    with row1_2:
+        c1, c2 = st.columns(2)
+        f1 = c1.file_uploader("Base Bagó", type=['xlsx'], key="f1", label_visibility="collapsed")
+        f2 = c2.file_uploader("FP/QX", type=['xlsx'], key="f2", label_visibility="collapsed")
 
     if f1 and f2:
         try:
@@ -152,18 +136,18 @@ else:
             res['DIFERENCIA'] = res['TOTAL_BAGO'] - res['TOTAL_FPQX']
             for col in ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']: res[col] = res[col].astype(int)
 
-            # Métricas compactas
+            # Métricas
             m1, m2, m3, m4 = st.columns(4)
             base_bago = res[res['TOTAL_BAGO'] > 0]
             desc = res[(res['TOTAL_BAGO'] == 0) & (res['TOTAL_FPQX'] > 0)]
             diff = base_bago[base_bago['DIFERENCIA'] != 0]
 
-            m1.metric("Items", len(base_bago))
-            m2.metric("Diff", len(diff), delta="-Err" if len(diff)>0 else "OK")
+            m1.metric("SKUs", len(base_bago))
+            m2.metric("Diff", len(diff), delta="-Err" if len(diff)>0 else None)
             m3.metric("Nuevos", len(desc))
-            m4.metric("Exacto", f"{round((1 - (len(diff)/len(base_bago)))*100,1)}%" if len(base_bago)>0 else "100%")
+            m4.metric("Precisión", f"{round((1 - (len(diff)/len(base_bago)))*100,1)}%" if len(base_bago)>0 else "100%")
 
-            # Filtrado y Tabla
+            # Tabla
             if vista == "Diferencias": final = diff.copy()
             elif vista == "No en Base": final = desc.copy()
             else: final = res.copy()
@@ -176,11 +160,11 @@ else:
                 st.dataframe(
                     final.style.highlight_between(left=-999999, right=-1, color='#ffdadb', subset=['DIF.'])
                                .applymap(lambda x: 'color: #D3D3D3;' if x == 'SN' else '', subset=['DESCRIPCION', 'LOTE'] if 'LOTE' in final.columns else ['DESCRIPCION']),
-                    use_container_width=True, height=350 # Altura fija para no desplazar la pantalla
+                    use_container_width=True, height=400
                 )
                 with st.sidebar:
                     output = io.BytesIO()
                     with pd.ExcelWriter(output, engine='openpyxl') as writer: final.to_excel(writer, index=False)
-                    st.download_button("📥 EXCEL", data=output.getvalue(), file_name="Reporte.xlsx")
+                    st.download_button("📥 DESCARGAR EXCEL", data=output.getvalue(), file_name="Reporte.xlsx")
         except Exception as e:
             st.error(f"Error: {e}")
