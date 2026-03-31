@@ -18,7 +18,6 @@ st.markdown(f"""
         border-left: 6px solid {MAGENTA_BAGO};
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }}
-    /* Botón Magenta (Descargar) */
     .stDownloadButton button {{
         background: linear-gradient(90deg, {MAGENTA_BAGO} 0%, #A00055 100%) !important;
         color: white !important;
@@ -29,7 +28,6 @@ st.markdown(f"""
         border: none !important;
         text-transform: uppercase !important;
     }}
-    /* Botón Negro (Reiniciar) */
     .stButton button {{
         background: #212529 !important;
         color: white !important;
@@ -43,15 +41,14 @@ st.markdown(f"""
     </style>
     """, unsafe_allow_html=True)
 
-# --- FUNCIÓN PARA BORRAR TODO ---
 def borrar_todo():
     for key in st.session_state.keys():
         del st.session_state[key]
     st.rerun()
 
 # --- CABECERA ---
-st.title("📋Conciliador de Inventarios Pro")
-st.write("Panel de Control Unificado | Laboratorios Bagó")
+st.title("🧪 Conciliador de Inventarios Pro")
+st.write("Soporte para Materiales con y sin Lote | Laboratorios Bagó")
 st.divider()
 
 # --- CARGA DE ARCHIVOS ---
@@ -61,7 +58,6 @@ with c_file1:
 with c_file2:
     f2 = st.file_uploader("📂 Inventario FP/QX", type=['xlsx'], key="file2")
 
-# --- LÓGICA PRINCIPAL ---
 if f1 and f2:
     try:
         df1 = pd.read_excel(f1)
@@ -70,18 +66,31 @@ if f1 and f2:
         df1.columns = df1.columns.astype(str).str.strip().str.upper()
         df2.columns = df2.columns.astype(str).str.strip().str.upper()
 
-        columnas_req = ['MATERIAL', 'LOTE', 'TOTAL']
+        # --- LÓGICA DE BLINDAJE PARA EL LOTE ---
+        def normalizar_lotes(df):
+            # Si no existe la columna LOTE, la creamos
+            if 'LOTE' not in df.columns:
+                df['LOTE'] = 'SIN LOTE'
+            # Si existe, llenamos los vacíos (NaN) con "SIN LOTE"
+            else:
+                df['LOTE'] = df['LOTE'].fillna('SIN LOTE').astype(str).str.strip()
+            return df
+
+        df1 = normalizar_lotes(df1)
+        df2 = normalizar_lotes(df2)
+
+        columnas_req = ['MATERIAL', 'TOTAL'] # LOTE ya está garantizado arriba
         tiene_desc = 'DESCRIPCION' in df1.columns and 'DESCRIPCION' in df2.columns
 
         if all(col in df1.columns for col in columnas_req) and all(col in df2.columns for col in columnas_req):
             
             def procesar(df):
                 df['MATERIAL'] = df['MATERIAL'].astype(str).str.strip()
-                df['LOTE'] = df['LOTE'].astype(str).str.strip()
                 agg = {'TOTAL': 'sum'}
                 if tiene_desc: 
                     df['DESCRIPCION'] = df['DESCRIPCION'].astype(str).str.strip()
                     agg['DESCRIPCION'] = 'first'
+                # Agrupamos por MATERIAL y LOTE (aunque diga "SIN LOTE")
                 return df.groupby(['MATERIAL', 'LOTE']).agg(agg).reset_index()
 
             d1 = procesar(df1)
@@ -130,29 +139,17 @@ if f1 and f2:
             # --- BOTONES AL FINAL ---
             st.divider()
             col_descarga, col_reset = st.columns([0.7, 0.3])
-            
             with col_descarga:
                 output = io.BytesIO()
                 with pd.ExcelWriter(output, engine='openpyxl') as writer:
                     res_final.to_excel(writer, index=False)
-                
-                st.download_button(
-                    label="📥 DESCARGAR REPORTE EXCEL",
-                    data=output.getvalue(),
-                    file_name="Reporte_Conciliacion.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-            
+                st.download_button(label="📥 DESCARGAR REPORTE EXCEL", data=output.getvalue(), file_name="Reporte_Conciliacion.xlsx")
             with col_reset:
-                if st.button("🔄 LIMPIAR"):
-                    borrar_todo()
-
+                if st.button("🔄 REINICIAR TODO"): borrar_todo()
         else:
-            st.error("⚠️ Verifica las columnas: MATERIAL, LOTE y TOTAL.")
+            st.error("⚠️ Verifica que los archivos tengan al menos las columnas: MATERIAL y TOTAL.")
     except Exception as e:
         st.error(f"Error: {e}")
 else:
-    # Si no hay archivos, también mostramos el botón de reiniciar por si acaso
-    if st.button("🔄 LIMPIAR PANTALLA"):
-        borrar_todo()
+    if st.button("🔄 LIMPIAR PANTALLA"): borrar_todo()
     st.info("👋 Por favor, carga los archivos Excel para comenzar.")
