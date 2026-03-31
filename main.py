@@ -5,68 +5,59 @@ import io
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Inventario | Laboratorios Bagó", page_icon="🧪", layout="wide")
 
-# --- VARIABLES DE MARCA ---
+# --- VARIABLES DE DISEÑO ---
 MAGENTA_BAGO = "#C7006A" 
-LOGO_URL = "https://www.bago.com.ar/wp-content/themes/bago/img/logo-bago.png" # URL ejemplo del logo
 
-# --- ESTILO CSS AVANZADO ---
+# --- ESTILO CSS (CORREGIDO Y MEJORADO) ---
 st.markdown(f"""
     <style>
-    .main {{
-        background-color: #f0f2f6;
-    }}
+    .main {{ background-color: #f4f7f9; }}
     .stMetric {{
         background-color: #ffffff;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        border-top: 4px solid {MAGENTA_BAGO};
-    }}
-    [data-testid="stSidebar"] {{
-        background-color: #ffffff;
-        border-right: 1px solid #e0e0e0;
-    }}
-    div.stButton > button:first-child {{
-        background-color: {MAGENTA_BAGO};
-        color: white;
+        padding: 15px;
         border-radius: 10px;
-        height: 3.5em;
+        border-left: 5px solid {MAGENTA_BAGO};
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }}
+    /* Botón de descarga */
+    div.stButton > button:first-child {{
+        background-color: {MAGENTA_BAGO} !important;
+        color: white !important;
+        border-radius: 8px;
         font-weight: bold;
+        height: 3.5em;
+        width: 100%;
         border: none;
-        box-shadow: 0 4px 15px rgba(199, 0, 106, 0.3);
     }}
-    h1 {{
-        color: {MAGENTA_BAGO};
-        font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-    }}
+    h1, h2 {{ color: {MAGENTA_BAGO} !important; }}
     </style>
     """, unsafe_allow_html=True)
 
-# --- BARRA LATERAL (SIDEBAR) ---
-with st.sidebar:
-    # Intentamos cargar el logo, si falla ponemos el nombre en texto
-    try:
-        st.image(LOGO_URL, width=200)
-    except:
-        st.markdown(f"# **Bagó**")
-    
-    st.divider()
-    st.markdown("### 📥 Carga de Archivos")
-    f1 = st.file_uploader("Inventario ANTERIOR", type=['xlsx'])
-    f2 = st.file_uploader("Inventario NUEVO", type=['xlsx'])
-    st.divider()
-    st.info("Desarrollado para Control de Calidad y Logística.")
+# --- ENCABEZADO ---
+col_logo, col_titulo = st.columns([1, 4])
+with col_logo:
+    # Título estilizado que reemplaza al logo si la imagen falla
+    st.markdown(f"<h1 style='font-size: 50px; margin:0;'>Bagó</h1>", unsafe_allow_html=True)
+with col_titulo:
+    st.title("Conciliador de Inventarios Pro")
+    st.write("Control de Calidad y Logística | Comparación Material + Lote")
 
-# --- CUERPO PRINCIPAL ---
-st.title("🧪 Conciliador de Inventarios")
-st.markdown("### Comparación por **Material + Lote**")
+st.divider()
+
+# --- CARGA DE ARCHIVOS (CENTRAL) ---
+with st.expander("📂 PANEL DE CARGA DE ARCHIVOS", expanded=True):
+    c1, c2 = st.columns(2)
+    with c1:
+        f1 = st.file_uploader("Inventario ANTERIOR (Base)", type=['xlsx'])
+    with c2:
+        f2 = st.file_uploader("Inventario NUEVO (Actual)", type=['xlsx'])
 
 if f1 and f2:
     try:
         df1 = pd.read_excel(f1)
         df2 = pd.read_excel(f2)
         
-        # Limpieza de columnas
+        # Limpieza de nombres de columnas
         df1.columns = df1.columns.astype(str).str.strip().str.upper()
         df2.columns = df2.columns.astype(str).str.strip().str.upper()
 
@@ -75,17 +66,20 @@ if f1 and f2:
 
         if all(col in df1.columns for col in columnas_req) and all(col in df2.columns for col in columnas_req):
             
-            # Procesamiento de datos (Ignorando descripción en la suma)
+            # Procesamiento unificado
             def procesar(df):
                 df['MATERIAL'] = df['MATERIAL'].astype(str).str.strip()
                 df['LOTE'] = df['LOTE'].astype(str).str.strip()
                 agg = {'TOTAL': 'sum'}
-                if tiene_desc: agg['DESCRIPCION'] = 'first'
+                if tiene_desc: 
+                    df['DESCRIPCION'] = df['DESCRIPCION'].astype(str).str.strip()
+                    agg['DESCRIPCION'] = 'first'
                 return df.groupby(['MATERIAL', 'LOTE']).agg(agg).reset_index()
 
             d1 = procesar(df1)
             d2 = procesar(df2)
 
+            # Comparación
             res = pd.merge(d1, d2, on=['MATERIAL', 'LOTE'], how='outer', suffixes=('_ANT', '_NUEVO')).fillna(0)
             res['DIFERENCIA'] = res['TOTAL_NUEVO'] - res['TOTAL_ANT']
 
@@ -94,45 +88,60 @@ if f1 and f2:
                 res.loc[res['DESCRIPCION'] == '', 'DESCRIPCION'] = res['DESCRIPCION_ANT']
                 res = res.drop(columns=['DESCRIPCION_ANT', 'DESCRIPCION_NUEVO'])
 
-            # --- PANEL DE CONTROL ---
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Items Totales", len(res))
-            m2.metric("Sobrantes", len(res[res['DIFERENCIA'] > 0]), delta=int(len(res[res['DIFERENCIA'] > 0])))
-            m3.metric("Faltantes", len(res[res['DIFERENCIA'] < 0]), delta=-int(len(res[res['DIFERENCIA'] < 0])), delta_color="inverse")
-            m4.metric("Precisión", f"{round((len(res[res['DIFERENCIA'] == 0])/len(res))*100, 1)}%")
-
-            st.divider()
-
-            # Tabla Dinámica
-            st.markdown("#### 📋 Detalle de Diferencias Encontradas")
+            # --- PANEL DE FILTROS (LOS BOTONES QUE HACÍAN FALTA) ---
+            st.markdown("### 🛠️ Herramientas de Análisis")
+            f_col1, f_col2, f_col3 = st.columns([2, 1, 1])
             
-            # Reordenar para que se vea bien
+            with f_col1:
+                busqueda = st.text_input("🔍 Buscar Material o Lote:", placeholder="Escribe aquí...")
+            with f_col2:
+                # FILTRO DE ESTADO REINSTALADO
+                opcion = st.selectbox("🎯 Ver solo:", ["Todo", "Diferencias", "Sobrantes", "Faltantes"])
+            with f_col3:
+                # MÉTRICA RÁPIDA
+                st.metric("Total items", len(res))
+
+            # Aplicar filtros al dataframe
+            res_final = res.copy()
+            if busqueda:
+                res_final = res_final[res_final['MATERIAL'].str.contains(busqueda, case=False) | 
+                                      res_final['LOTE'].str.contains(busqueda, case=False)]
+            
+            if opcion == "Diferencias":
+                res_final = res_final[res_final['DIFERENCIA'] != 0]
+            elif opcion == "Sobrantes":
+                res_final = res_final[res_final['DIFERENCIA'] > 0]
+            elif opcion == "Faltantes":
+                res_final = res_final[res_final['DIFERENCIA'] < 0]
+
+            # Reordenar columnas
             cols = ['MATERIAL', 'LOTE']
             if tiene_desc: cols.append('DESCRIPCION')
             cols += ['TOTAL_ANT', 'TOTAL_NUEVO', 'DIFERENCIA']
-            res = res[cols]
+            res_final = res_final[cols]
 
+            # --- TABLA DE RESULTADOS ---
             st.dataframe(
-                res.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'])
-                          .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA']),
+                res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'])
+                               .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA']),
                 use_container_width=True
             )
 
-            # Descarga
+            # --- BOTÓN DE EXPORTACIÓN ---
             output = io.BytesIO()
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                res.to_excel(writer, index=False)
+                res_final.to_excel(writer, index=False)
             
             st.download_button(
                 label="📥 EXPORTAR REPORTE OFICIAL A EXCEL",
                 data=output.getvalue(),
-                file_name="CONCILIACION_BAGO.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                use_container_width=True
+                file_name="REPORTE_BAGO_INVENTARIO.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             )
+
         else:
-            st.error("⚠️ Error: Faltan columnas clave en los archivos.")
+            st.error("⚠️ Columnas no encontradas. Verifica que tus Excel tengan: MATERIAL, LOTE, TOTAL.")
     except Exception as e:
-        st.error(f"Error: {e}")
+        st.error(f"Error técnico: {e}")
 else:
-    st.warning("👈 Por favor, carga los archivos en el menú de la izquierda para comenzar.")
+    st.info("👋 Bienvenido. Sube los dos archivos Excel arriba para comenzar la conciliación.")
