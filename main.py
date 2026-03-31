@@ -5,14 +5,12 @@ import io
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Dashboard Inventario | Bagó", page_icon="🧪", layout="wide")
 
-# --- IDENTIDAD VISUAL Y CSS PREMIUM ---
+# --- IDENTIDAD VISUAL ---
 MAGENTA_BAGO = "#C7006A" 
 
 st.markdown(f"""
     <style>
     .main {{ background: #f8f9fa; }}
-    
-    /* Tarjetas de métricas con efecto de elevación */
     [data-testid="stMetric"] {{
         background-color: white;
         border-radius: 15px;
@@ -20,29 +18,36 @@ st.markdown(f"""
         border-left: 6px solid {MAGENTA_BAGO};
         box-shadow: 0 4px 12px rgba(0,0,0,0.05);
     }}
-
-    /* Botón de Descarga con degradado Bagó */
-    div.stButton > button:first-child {{
+    /* Botón Magenta (Descargar) */
+    .stDownloadButton button {{
         background: linear-gradient(90deg, {MAGENTA_BAGO} 0%, #A00055 100%) !important;
         color: white !important;
-        border-radius: 10px;
-        font-weight: bold;
-        height: 3.8em;
-        width: 100%;
-        border: none;
-        text-transform: uppercase;
-        box-shadow: 0 4px 15px rgba(199, 0, 106, 0.3);
-        transition: transform 0.2s;
+        border-radius: 10px !important;
+        font-weight: bold !important;
+        height: 3.8em !important;
+        width: 100% !important;
+        border: none !important;
+        text-transform: uppercase !important;
     }}
-    
-    div.stButton > button:first-child:hover {{
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(199, 0, 106, 0.4);
+    /* Botón Negro (Reiniciar) */
+    .stButton button {{
+        background: #212529 !important;
+        color: white !important;
+        border-radius: 10px !important;
+        font-weight: bold !important;
+        height: 3.8em !important;
+        width: 100% !important;
+        border: none !important;
     }}
-
     h1, h2, h3 {{ color: {MAGENTA_BAGO} !important; font-weight: 800; }}
     </style>
     """, unsafe_allow_html=True)
+
+# --- FUNCIÓN PARA BORRAR TODO ---
+def borrar_todo():
+    for key in st.session_state.keys():
+        del st.session_state[key]
+    st.rerun()
 
 # --- CABECERA ---
 st.title("🧪 Conciliador de Inventarios Pro")
@@ -50,15 +55,15 @@ st.write("Panel de Control Unificado | Laboratorios Bagó")
 st.divider()
 
 # --- CARGA DE ARCHIVOS ---
-c1, c2 = st.columns(2)
-with c1:
-    f1 = st.file_uploader("📂 Inventario BAGO (Anterior)", type=['xlsx'])
-with c2:
-    f2 = st.file_uploader("📂 Inventario FP/QX (Nuevo)", type=['xlsx'])
+c_file1, c_file2 = st.columns(2)
+with c_file1:
+    f1 = st.file_uploader("📂 Inventario BAGO", type=['xlsx'], key="file1")
+with c_file2:
+    f2 = st.file_uploader("📂 Inventario FP/QX", type=['xlsx'], key="file2")
 
+# --- LÓGICA PRINCIPAL ---
 if f1 and f2:
     try:
-        # Procesamiento directo sin botones de despliegue
         df1 = pd.read_excel(f1)
         df2 = pd.read_excel(f2)
         
@@ -85,31 +90,22 @@ if f1 and f2:
             res = pd.merge(d1, d2, on=['MATERIAL', 'LOTE'], how='outer', suffixes=('_BAGO', '_FPQX')).fillna(0)
             res['DIFERENCIA'] = res['TOTAL_BAGO'] - res['TOTAL_FPQX']
 
-            if tiene_desc:
-                res['DESCRIPCION'] = res['DESCRIPCION_FPQX'].replace(0, '')
-                res.loc[res['DESCRIPCION'] == '', 'DESCRIPCION'] = res['DESCRIPCION_ANT'] if 'DESCRIPCION_ANT' in res else res['DESCRIPCION_BAGO']
-                # Limpiar columnas sobrantes
-                for col in ['DESCRIPCION_BAGO', 'DESCRIPCION_FPQX']:
-                    if col in res: res = res.drop(columns=[col])
-
-            # --- 📊 MÉTRICAS EJECUTIVAS ---
+            # Métricas
             st.markdown("### 🔍 Resumen Ejecutivo")
             m1, m2, m3 = st.columns(3)
-            
             m1.metric("Ítems Únicos", len(res))
             m2.metric("Sobrantes (+)", len(res[res['DIFERENCIA'] > 0]), delta="Ingresos")
             m3.metric("Faltantes (-)", len(res[res['DIFERENCIA'] < 0]), delta="Bajas", delta_color="inverse")
 
             st.divider()
 
-            # --- 🔍 FILTROS ---
+            # Filtros
             f_col1, f_col2 = st.columns([2, 1])
             with f_col1:
                 busqueda = st.text_input("🔎 Localizar Material o Lote:")
             with f_col2:
-                opcion = st.selectbox("🎯 Filtrar por categoría:", ["Ver Todo", "Diferencias Detectadas", "Sobrantes", "Faltantes"])
+                opcion = st.selectbox("🎯 Filtrar por:", ["Todo", "Diferencias Detectadas", "Sobrantes", "Faltantes"])
 
-            # Lógica de Filtros
             res_final = res.copy()
             if busqueda:
                 res_final = res_final[res_final['MATERIAL'].str.contains(busqueda, case=False) | 
@@ -122,35 +118,41 @@ if f1 and f2:
             elif opcion == "Faltantes":
                 res_final = res_final[res_final['DIFERENCIA'] < 0]
 
-            # Nombres finales de columnas
             res_final = res_final.rename(columns={'TOTAL_BAGO': 'TOTAL BAGO', 'TOTAL_FPQX': 'TOTAL FP/QX'})
-            cols = ['MATERIAL', 'LOTE']
-            if tiene_desc: cols.append('DESCRIPCION')
-            cols += ['TOTAL BAGO', 'TOTAL FP/QX', 'DIFERENCIA']
-            res_final = res_final[cols]
-
-            # --- TABLA DE DATOS ---
+            
+            # Tabla
             st.dataframe(
                 res_final.style.highlight_between(left=-999999, right=-0.1, color='#ffdadb', subset=['DIFERENCIA'])
                                .highlight_between(left=0.1, right=999999, color='#d4edda', subset=['DIFERENCIA']),
                 use_container_width=True
             )
 
-            # --- EXPORTACIÓN ---
+            # --- BOTONES AL FINAL ---
             st.divider()
-            output = io.BytesIO()
-            with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                res_final.to_excel(writer, index=False)
+            col_descarga, col_reset = st.columns([0.7, 0.3])
             
-            st.download_button(
-                label="📥 DESCARGAR REPORTE OFICIAL EN EXCEL",
-                data=output.getvalue(),
-                file_name="Reporte_Bago_Conciliacion.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            )
+            with col_descarga:
+                output = io.BytesIO()
+                with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    res_final.to_excel(writer, index=False)
+                
+                st.download_button(
+                    label="📥 DESCARGAR REPORTE EXCEL",
+                    data=output.getvalue(),
+                    file_name="Reporte_Conciliacion.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                )
+            
+            with col_reset:
+                if st.button("🔄 REINICIAR TODO"):
+                    borrar_todo()
+
         else:
-            st.error("⚠️ Estructura incorrecta. Asegúrate de incluir: MATERIAL, LOTE y TOTAL.")
+            st.error("⚠️ Verifica las columnas: MATERIAL, LOTE y TOTAL.")
     except Exception as e:
-        st.error(f"Falla crítica en el proceso: {e}")
+        st.error(f"Error: {e}")
 else:
-    st.info("👋 Listo para procesar. Por favor sube los archivos de inventario.")
+    # Si no hay archivos, también mostramos el botón de reiniciar por si acaso
+    if st.button("🔄 LIMPIAR PANTALLA"):
+        borrar_todo()
+    st.info("👋 Por favor, carga los archivos Excel para comenzar.")
