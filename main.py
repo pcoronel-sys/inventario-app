@@ -1,107 +1,26 @@
 import streamlit as st
 import pandas as pd
 import io
-from datetime import datetime
+from datetime import datetime, timedelta
 
 # --- CONFIGURACIÓN DE PÁGINA ---
 st.set_page_config(page_title="Bagó | Intel-Stock Pro", page_icon="🧪", layout="wide")
 
-# --- DISEÑO ESTÉTICO UI/UX PRO (EFECTO GLASS Y ANIMACIONES) ---
+# --- DISEÑO ESTÉTICO UI/UX PRO ---
 MAGENTA_BAGO = "#C7006A" 
 MAGENTA_OSCURO = "#8A004A"
 
 st.markdown(f"""
     <style>
-    /* Fondo con gradiente dinámico */
-    .main {{ 
-        background: radial-gradient(circle at top right, #ffffff, #f0f2f6); 
-    }}
-    
-    /* Saludo Dinámico */
-    .welcome-text {{
-        text-align: center;
-        color: #888;
-        font-size: 1.2rem;
-        font-weight: 300;
-        letter-spacing: 2px;
-        text-transform: uppercase;
-        margin-bottom: -10px;
-    }}
-
-    /* Título Impactante */
-    .main-title {{
-        color: {MAGENTA_BAGO};
-        font-size: 5rem !important;
-        font-weight: 900 !important;
-        text-align: center;
-        margin-top: 0px;
-        letter-spacing: -4px;
-        filter: drop-shadow(0px 10px 15px rgba(199, 0, 106, 0.2));
-        line-height: 1;
-    }}
-
-    /* BOTONES TIPO TARJETA PREMIUM */
-    div.stButton > button {{
-        background: rgba(255, 255, 255, 0.7) !important;
-        backdrop-filter: blur(15px) !important;
-        color: #333 !important;
-        border: 1px solid rgba(255, 255, 255, 0.3) !important;
-        border-radius: 35px !important;
-        height: 250px !important;
-        width: 100% !important;
-        box-shadow: 0 20px 40px rgba(0,0,0,0.05) !important;
-        transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1.0) !important;
-        font-size: 1.4rem !important;
-        font-weight: 800 !important;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }}
-
-    div.stButton > button:hover {{
-        background: linear-gradient(135deg, {MAGENTA_BAGO} 0%, {MAGENTA_OSCURO} 100%) !important;
-        color: white !important;
-        transform: translateY(-15px) scale(1.03) !important;
-        box-shadow: 0 30px 60px rgba(199, 0, 106, 0.3) !important;
-        border: 1px solid {MAGENTA_BAGO} !important;
-    }}
-
-    /* Etiquetas de Almacén */
-    .almacen-tag {{
-        text-align: center;
-        color: {MAGENTA_BAGO};
-        font-weight: 800;
-        font-size: 1rem;
-        margin-bottom: 10px;
-        letter-spacing: 1px;
-    }}
-
-    /* Footer Informativo con Estilo de Tarjeta */
-    .footer-card {{
-        background: white;
-        border-radius: 25px;
-        padding: 30px;
-        text-align: center;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
-        border-bottom: 5px solid {MAGENTA_BAGO};
-        transition: 0.3s;
-    }}
-    .footer-card:hover {{
-        transform: translateY(-5px);
-    }}
-
-    /* Sidebar y Métricas */
-    [data-testid="stSidebar"] {{
-        background-color: white !important;
-        border-right: 1px solid #eee;
-    }}
-    div[data-testid="stMetric"] {{
-        background: white !important;
-        border-radius: 20px !important;
-        padding: 20px !important;
-        border-left: 8px solid {MAGENTA_BAGO} !important;
-        box-shadow: 0 10px 20px rgba(0,0,0,0.04) !important;
-    }}
+    .main {{ background: radial-gradient(circle at top right, #ffffff, #f0f2f6); }}
+    .welcome-text {{ text-align: center; color: #888; font-size: 1.2rem; font-weight: 300; letter-spacing: 2px; text-transform: uppercase; margin-bottom: -10px; }}
+    .main-title {{ color: {MAGENTA_BAGO}; font-size: 5rem !important; font-weight: 900 !important; text-align: center; margin-top: 0px; letter-spacing: -4px; filter: drop-shadow(0px 10px 15px rgba(199, 0, 106, 0.2)); line-height: 1; }}
+    div.stButton > button {{ background: rgba(255, 255, 255, 0.7) !important; backdrop-filter: blur(15px) !important; color: #333 !important; border: 1px solid rgba(255, 255, 255, 0.3) !important; border-radius: 35px !important; height: 250px !important; width: 100% !important; box-shadow: 0 20px 40px rgba(0,0,0,0.05) !important; transition: all 0.6s cubic-bezier(0.165, 0.84, 0.44, 1.0) !important; font-size: 1.4rem !important; font-weight: 800 !important; display: flex; flex-direction: column; justify-content: center; }}
+    div.stButton > button:hover {{ background: linear-gradient(135deg, {MAGENTA_BAGO} 0%, {MAGENTA_OSCURO} 100%) !important; color: white !important; transform: translateY(-15px) scale(1.03) !important; box-shadow: 0 30px 60px rgba(199, 0, 106, 0.3) !important; border: 1px solid {MAGENTA_BAGO} !important; }}
+    .almacen-tag {{ text-align: center; color: {MAGENTA_BAGO}; font-weight: 800; font-size: 1rem; margin-bottom: 10px; letter-spacing: 1px; }}
+    .footer-card {{ background: white; border-radius: 25px; padding: 30px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.03); border-bottom: 5px solid {MAGENTA_BAGO}; transition: 0.3s; }}
+    [data-testid="stSidebar"] {{ background-color: white !important; border-right: 1px solid #eee; }}
+    div[data-testid="stMetric"] {{ background: white !important; border-radius: 20px !important; padding: 20px !important; border-left: 8px solid {MAGENTA_BAGO} !important; box-shadow: 0 10px 20px rgba(0,0,0,0.04) !important; }}
     </style>
     """, unsafe_allow_html=True)
 
@@ -114,11 +33,13 @@ def borrar_todo():
         del st.session_state[key]
     st.rerun()
 
-# --- SALUDO DINÁMICO CORREGIDO ---
-hora = datetime.now().hour
-if 5 <= hora < 12:
+# --- AJUSTE MANUAL DE HORA (GMT-5 para Ecuador/Colombia/Perú) ---
+# Restamos 5 horas a la hora del servidor para igualar tu reloj
+hora_ajustada = (datetime.now() - timedelta(hours=5)).hour
+
+if 5 <= hora_ajustada < 12:
     saludo_txt = "☀️ Buenos días"
-elif 12 <= hora < 19:
+elif 12 <= hora_ajustada < 19:
     saludo_txt = "🌤️ Buenas tardes"
 else:
     saludo_txt = "🌙 Buenas noches"
@@ -193,9 +114,8 @@ else:
             for col in ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']:
                 res_maestro[col] = res_maestro[col].astype(int)
 
-            # --- MÉTRICAS (5 COLUMNAS) ---
+            # --- MÉTRICAS ---
             m1, m2, m3, m4, m5 = st.columns(5)
-            
             base_bago = res_maestro[res_maestro['TOTAL_BAGO'] > 0]
             no_en_bago = res_maestro[(res_maestro['TOTAL_BAGO'] == 0) & (res_maestro['TOTAL_FPQX'] > 0)]
             no_en_qx = res_maestro[(res_maestro['TOTAL_BAGO'] > 0) & (res_maestro['TOTAL_FPQX'] == 0)]
