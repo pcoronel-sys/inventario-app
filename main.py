@@ -102,7 +102,7 @@ if st.session_state.modo is None:
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
     st.markdown("<h4 style='text-align:center; color:#888; font-weight:300; margin-bottom:50px;'>Intelligence Stock Management System</h4>", unsafe_allow_html=True)
     
-    _, col_l, col_r, _ = st.columns([6.5, 3, 2, 6.5])
+    _, col_l, col_r, _ = st.columns([6.5, 4, 4, 6.5])
     
     with col_l:
         st.markdown(f"<div style='text-align:center; color:{MAGENTA_BAGO}; font-weight:bold; margin-bottom:10px;'>BODEGA DE EMPAQUE</div>", unsafe_allow_html=True)
