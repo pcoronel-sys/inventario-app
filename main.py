@@ -124,7 +124,6 @@ if st.session_state.modo is None:
     st.markdown('<p class="main-title">Laboratorios Bagó</p>', unsafe_allow_html=True)
     st.markdown("<h3 style='text-align:center; color:#555; font-weight:300; margin-bottom:60px;'>Intel-Stock Management</h3>", unsafe_allow_html=True)
     
-    # Grid central imponente
     _, col_l, col_r, _ = st.columns([6.5, 1.8, 1.8, 6.5])
     
     with col_l:
@@ -139,7 +138,6 @@ if st.session_state.modo is None:
             st.session_state.modo = "sin_lote"
             st.rerun()
 
-    # Footer con pasos visuales
     st.markdown("<br><br><br>", unsafe_allow_html=True)
     f1, f2, f3 = st.columns(3)
     with f1: st.markdown("<div class='footer-card'><h3>📂 1. Conexión</h3>Subida de maestros de inventario</div>", unsafe_allow_html=True)
@@ -152,7 +150,8 @@ else:
         st.markdown(f"<h2 style='color:{MAGENTA_BAGO};'>⚙️ Controles</h2>", unsafe_allow_html=True)
         st.info(f"📍 Bodega: {'1010' if st.session_state.modo == 'con_lote' else '1070'}")
         busq = st.text_input("🔍 Buscar Codigo...")
-        vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Base", "Total diferencias"])
+        # ACTUALIZADO: Filtros en sidebar para las nuevas métricas
+        vista = st.selectbox("🎯 Vista:", ["Base Bagó", "Diferencias", "No en Bagó", "No en FP/QX", "Total diferencias"])
         st.divider()
         if st.button("🏠 Volver al Inicio"): borrar_todo()
 
@@ -190,22 +189,30 @@ else:
             for col in ['TOTAL_BAGO', 'TOTAL_FPQX', 'DIFERENCIA']:
                 res_maestro[col] = res_maestro[col].astype(int)
 
-            # MÉTRICAS
-            m1, m2, m3, m4 = st.columns(4)
+            # --- NUEVA LÓGICA DE MÉTRICAS (5 COLUMNAS) ---
+            m1, m2, m3, m4, m5 = st.columns(5)
+            
             base_bago = res_maestro[res_maestro['TOTAL_BAGO'] > 0]
-            desconocidos = res_maestro[(res_maestro['TOTAL_BAGO'] == 0) & (res_maestro['TOTAL_FPQX'] > 0)]
-            diff_stock = base_bago[base_bago['DIFERENCIA'] != 0]
+            # No en Bagó: Existe en FP/QX pero su cantidad en Bagó es 0
+            no_en_bago = res_maestro[(res_maestro['TOTAL_BAGO'] == 0) & (res_maestro['TOTAL_FPQX'] > 0)]
+            # No en FP/QX: Existe en Bagó pero su cantidad en FP/QX es 0
+            no_en_qx = res_maestro[(res_maestro['TOTAL_BAGO'] > 0) & (res_maestro['TOTAL_FPQX'] == 0)]
+            # Diferencias: Existe en ambos pero las cantidades no coinciden
+            diff_stock = res_maestro[(res_maestro['TOTAL_BAGO'] > 0) & (res_maestro['TOTAL_FPQX'] > 0) & (res_maestro['DIFERENCIA'] != 0)]
 
             m1.metric("SKUs Bagó", len(base_bago))
             m2.metric("Diferencias", len(diff_stock), delta="-Error" if len(diff_stock)>0 else None, delta_color="normal")
-            m3.metric("No en Base", len(desconocidos))
-            m4.metric("Precisión", f"{round((1 - (len(diff_stock)/len(base_bago)))*100,1)}%" if len(base_bago)>0 else "100%")
+            m3.metric("No en Bagó", len(no_en_bago), delta="Sobrante QX", delta_color="inverse")
+            m4.metric("No en FP/QX", len(no_en_qx), delta="Faltante QX")
+            m5.metric("Precisión", f"{round((1 - (len(diff_stock)+len(no_en_qx))/len(base_bago))*100,1)}%" if len(base_bago)>0 else "100%")
 
             st.divider()
             
+            # --- FILTRADO POR VISTA ---
             if vista == "Base Bagó": res_final = base_bago.copy()
             elif vista == "Diferencias": res_final = diff_stock.copy()
-            elif vista == "No en Base": res_final = desconocidos.copy()
+            elif vista == "No en Bagó": res_final = no_en_bago.copy()
+            elif vista == "No en FP/QX": res_final = no_en_qx.copy()
             else: res_final = res_maestro[res_maestro['DIFERENCIA'] != 0].copy()
 
             if busq:
@@ -222,4 +229,3 @@ else:
                     st.download_button("📥 DESCARGAR EXCEL", data=output.getvalue(), file_name="Auditoria.xlsx")
         except Exception as e:
             st.error(f"Error: {e}")
-
